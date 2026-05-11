@@ -1,0 +1,94 @@
+.melody-container{
+    max-width:1000px;
+    margin:40px auto;
+    font-family:Arial,sans-serif;
+}
+
+.melody-box{
+    background:#fff;
+    border:1px solid #ddd;
+    padding:25px;
+    margin-bottom:25px;
+    border-radius:12px;
+}
+
+.melody-box form{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.melody-box input,
+.melody-box select{
+    padding:12px;
+    min-width:250px;
+}
+
+.melody-box button{
+    padding:12px 18px;
+    border:none;
+    background:#111827;
+    color:#fff;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.melody-playlist{
+    border:1px solid #e5e7eb;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:25px;
+}
+
+.melody-playlist-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.melody-video-list{
+    list-style:none;
+    padding:0;
+    margin:0;
+}
+
+.melody-video-list li{
+    display:flex;
+    gap:15px;
+    padding:15px 0;
+    border-bottom:1px solid #eee;
+}
+
+.melody-video-list img{
+    width:160px;
+    border-radius:8px;
+}
+
+.melody-video-info{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.melody-actions{
+    display:flex;
+    gap:15px;
+}
+
+.melody-delete{
+    color:red;
+}
+
+.melody-alert{
+    padding:14px;
+    margin-bottom:20px;
+    border-radius:8px;
+}
+
+.melody-alert.success{
+    background:#dcfce7;
+}
+
+.melody-alert.error{
+    background:#fee2e2;
+}

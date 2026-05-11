@@ -7,55 +7,8 @@
 'use strict';
 
 /* ─────────────────────────────────────────────────────
-   1.  PLAYLIST SOURCES
-   Edit this array to add your Google Sheet / JSON APIs.
-   Each object: { name, api }
-   The API must return JSON: [{id, title, url}, ...]
-   For a quick demo we include a few public sample songs.
-───────────────────────────────────────────────────── */
-const DEFAULT_PLAYLIST_SOURCES = [
-    {
-        name: 'Rock',
-        api: 'https://raw.githubusercontent.com/public-apis/public-apis/master/public-apis.json', // placeholder
-        demo: [
-            { id: 'oQDm5DtIUQw', title: 'Keh de banjaare', url: 'https://www.youtube.com/watch?v=oQDm5DtIUQw&list=RD_ofs9Kfh4AQ&index=7' },
-            { id: 'p4pHCMOJbXo', title: 'Epic Guitar Solo – Classic Rock Vibes', url: 'https://www.youtube.com/watch?v=p4pHCMOJbXo' },
-            { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up – Rick Astley', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-            { id: 'hTWKbfoikeg', title: 'Smells Like Teen Spirit – Nirvana', url: 'https://www.youtube.com/watch?v=hTWKbfoikeg' },
-        ]
-    },
-    {
-        name: 'Lofi',
-        api: '',
-        demo: [
-            { id: 'jfKfPfyJRdk', title: 'lofi hip hop radio – beats to relax/study to', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
-            { id: '5qap5aO4i9A', title: 'lofi hip hop radio – beats to sleep/chill to', url: 'https://www.youtube.com/watch?v=5qap5aO4i9A' },
-            { id: 'DWcJFNfaw9c', title: 'Smooth Lofi Study Beats', url: 'https://www.youtube.com/watch?v=DWcJFNfaw9c' },
-        ]
-    },
-    {
-        name: 'Anime',
-        api: '',
-        demo: [
-            { id: 'w7dZzNiXMPw', title: 'Gurenge – LiSA (Demon Slayer OP)', url: 'https://www.youtube.com/watch?v=w7dZzNiXMPw' },
-            { id: 'UcX5fMSRXHk', title: 'A Cruel Angel\'s Thesis – Evangelion', url: 'https://www.youtube.com/watch?v=UcX5fMSRXHk' },
-            { id: 'VEAx8MzKkrY', title: 'Unravel – Tokyo Ghoul OP', url: 'https://www.youtube.com/watch?v=VEAx8MzKkrY' },
-            { id: 'b7M_4JTB0RU', title: 'Renai Circulation – Bakemonogatari', url: 'https://www.youtube.com/watch?v=b7M_4JTB0RU' },
-        ]
-    },
-    {
-        name: 'Chill',
-        api: '',
-        demo: [
-            { id: 'kgx4WGK0oNU', title: 'Weightless – Marconi Union', url: 'https://www.youtube.com/watch?v=kgx4WGK0oNU' },
-            { id: 'qafhdMo94Ho', title: 'Deep Chill Mix – Piano & Nature', url: 'https://www.youtube.com/watch?v=qafhdMo94Ho' },
-        ]
-    }
-];
-
-/* ─────────────────────────────────────────────────────
-   2.  STATE
-───────────────────────────────────────────────────── */
+    2.  STATE
+──────────────────────────────────────────────────── */
 const state = {
     playlists:        [],        // [{name, api, demo, tracks:[]}]
     activePl:         0,         // index of active playlist
@@ -481,11 +434,12 @@ function seekTo(e) {
 }
 
 /* ─────────────────────────────────────────────────────
-   10.  PLAYLIST LOADING
-───────────────────────────────────────────────────── */
-function initPlaylists() {
-    // Start with defaults, then append any custom saved playlists (added via loadStorage)
-    state.playlists = DEFAULT_PLAYLIST_SOURCES.map(p => ({ ...p, tracks: [] }));
+    10.  PLAYLIST LOADING
+───────────────────────────────────────────────── */
+async function initPlaylists() {
+    // Fetch playlists from API and merge with defaults
+    const sources = await getPlaylistSources();
+    state.playlists = sources.map(p => ({ ...p, tracks: [] }));
     // Custom ones are already pushed by loadStorage before initPlaylists
 }
 
@@ -958,10 +912,10 @@ function applySavedState() {
 }
 
 /* ─────────────────────────────────────────────────────
-   21.  BOOT
-───────────────────────────────────────────────────── */
-function boot() {
-    initPlaylists();
+    21.  BOOT
+───────────────────────────────────────────────── */
+async function boot() {
+    await initPlaylists();
     loadStorage();       // may push custom playlists
     applySavedState();
     renderPlaylistNav();
