@@ -858,6 +858,7 @@ function bindEvents() {
 
     /* Keyboard shortcuts */
     document.addEventListener('keydown', handleKeyboard);
+
 }
 
 function handleKeyboard(e) {
