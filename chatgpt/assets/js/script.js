@@ -18,7 +18,7 @@ const DEFAULT_PLAYLIST_SOURCES = [
         name: 'Rock',
         api: 'https://raw.githubusercontent.com/public-apis/public-apis/master/public-apis.json', // placeholder
         demo: [
-            { id: '9YR7b20Maig', title: 'Progressive Instrumental Rock – "JB"', url: 'https://www.youtube.com/watch?v=9YR7b20Maig' },
+            { id: 'oQDm5DtIUQw', title: 'Keh de banjaare', url: 'https://www.youtube.com/watch?v=oQDm5DtIUQw&list=RD_ofs9Kfh4AQ&index=7' },
             { id: 'p4pHCMOJbXo', title: 'Epic Guitar Solo – Classic Rock Vibes', url: 'https://www.youtube.com/watch?v=p4pHCMOJbXo' },
             { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up – Rick Astley', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
             { id: 'hTWKbfoikeg', title: 'Smells Like Teen Spirit – Nirvana', url: 'https://www.youtube.com/watch?v=hTWKbfoikeg' },
