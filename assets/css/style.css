@@ -240,6 +240,12 @@ body {
     border-radius: var(--radius-sm);
     overflow: hidden;
 }
+
+.as-r-btn:hover {
+    background: var(--accent);
+    color: #000;
+}
+
 .mode-btn {
     flex: 1;
     background: none;
