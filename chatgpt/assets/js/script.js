@@ -853,6 +853,9 @@ function bindEvents() {
         if (e.target === dom.modalOverlay) dom.modalOverlay.classList.add('hidden');
     });
 
+    /* Reset button */
+    document.getElementById('btn-reset').addEventListener('click', resetPlayer);
+
     /* Keyboard shortcuts */
     document.addEventListener('keydown', handleKeyboard);
 }
@@ -926,6 +929,25 @@ async function boot() {
     // Load default playlist
     const startPl = Math.min(state.activePl, state.playlists.length - 1);
     loadPlaylist(startPl);
+}
+
+function resetPlayer() {
+    // Clear localStorage
+    localStorage.removeItem(LS_KEY);
+
+    // Reset state to defaults
+    state.volume = 80;
+    state.loopMode = 'none';
+    state.isShuffle = false;
+    state.autoplay = true;
+    state.speed = 1;
+    state.favorites.clear();
+    state.activePl = 0;
+    state.currentIdx = -1;
+    state.isPlaying = false;
+
+    // Reinitialize
+    boot();
 }
 
 document.addEventListener('DOMContentLoaded', boot);
