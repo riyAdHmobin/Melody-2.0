@@ -16,6 +16,7 @@ const state = {
     autoplay:         true,
     speed:            1,
     favorites:        new Set(),
+    favoritesActive:  false,
     searchQuery:      '',
     ytPlayer:         null,
     ytReady:          false,
@@ -432,6 +433,7 @@ async function loadPlaylist(idx) {
     const pl = state.playlists[idx];
     if (!pl) return;
 
+    state.favoritesActive = false;
     state.activePl  = idx;
     state.currentIdx = -1;
 
@@ -562,9 +564,22 @@ function escHtml(s) {
 ───────────────────────────────────────────────────── */
 function renderPlaylistNav() {
     dom.playlistList.innerHTML = '';
+
+    // Favorites pseudo-playlist
+    const favLi = document.createElement('li');
+    favLi.className = state.favoritesActive ? 'active' : '';
+    const favCount = state.favorites.size;
+    favLi.innerHTML = `
+      <button>
+        <span class="pl-dot fav-pl-dot"></span>
+        Favorites${favCount ? ` (${favCount})` : ''}
+      </button>`;
+    favLi.querySelector('button').addEventListener('click', loadFavoritesView);
+    dom.playlistList.appendChild(favLi);
+
     state.playlists.forEach((pl, idx) => {
         const li  = document.createElement('li');
-        li.className = idx === state.activePl ? 'active' : '';
+        li.className = (!state.favoritesActive && idx === state.activePl) ? 'active' : '';
         li.innerHTML = `
       <button>
         <span class="pl-dot"></span>
@@ -611,6 +626,43 @@ function toggleFavorite(id, btn) {
         if (state.tracks[state.currentIdx]?.id === id) dom.btnFavorite.classList.add('favorited');
     }
     saveStorage();
+    syncFavoriteToDB(id);
+    renderPlaylistNav();
+    if (state.favoritesActive) loadFavoritesView();
+}
+
+async function syncFavoriteToDB(id) {
+    try {
+        await fetch('/api/favorites.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+        });
+    } catch(e) { /* offline — localStorage already saved it */ }
+}
+
+function loadFavoritesView() {
+    state.favoritesActive = true;
+    state.currentIdx = -1;
+
+    const seen = new Set();
+    const tracks = [];
+    for (const pl of state.playlists) {
+        const src = pl.tracks?.length ? pl.tracks : (pl.demo || []);
+        for (const t of src) {
+            if (state.favorites.has(t.id) && !seen.has(t.id)) {
+                seen.add(t.id);
+                tracks.push(t);
+            }
+        }
+    }
+    state.tracks = tracks;
+
+    dom.tracklistTitle.textContent = 'Favorites';
+    dom.tracklistLoading.classList.add('hidden');
+    dom.tracklistCount.textContent = `${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
+    renderTrackList();
+    renderPlaylistNav();
 }
 
 /* ─────────────────────────────────────────────────────
@@ -900,6 +952,7 @@ function applySavedState() {
 async function boot() {
     await initPlaylists();
     loadStorage();       // may push custom playlists
+    await loadFavoritesFromDB();
     applySavedState();
     renderPlaylistNav();
     bindEvents();
@@ -908,6 +961,18 @@ async function boot() {
 
     const startPl = Math.min(state.activePl, state.playlists.length - 1);
     loadPlaylist(startPl);
+}
+
+async function loadFavoritesFromDB() {
+    try {
+        const res = await fetch('/api/favorites.php');
+        if (!res.ok) return;
+        const ids = await res.json();
+        if (Array.isArray(ids) && ids.length) {
+            state.favorites = new Set(ids);
+            saveStorage();
+        }
+    } catch(e) { /* keep localStorage favorites if DB unreachable */ }
 }
 
 function resetPlayer() {

@@ -33,6 +33,13 @@ function melody_db(): PDO {
             FOREIGN KEY (playlist_id) REFERENCES melody_playlists(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS melody_favorites (
+            id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            youtube_id VARCHAR(100) NOT NULL UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
 
     return $pdo;
 }

@@ -231,6 +231,8 @@ body {
     transition: background .15s;
 }
 .playlist-nav li.active .pl-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+.pl-dot.fav-pl-dot { background: #e25555 !important; }
+.playlist-nav li.active .fav-pl-dot { box-shadow: 0 0 6px rgba(226,85,85,.5) !important; }
 
 /* Mode Toggle */
 .mode-toggle {
