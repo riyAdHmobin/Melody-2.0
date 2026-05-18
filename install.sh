@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Melody installer — Ubuntu/Debian
-# Usage: bash install.sh
+# Usage (local):  bash install.sh
+# Usage (remote): bash <(curl -fsSL https://raw.githubusercontent.com/riyAdHmobin/Melody-2.0/main/install.sh)
 set -euo pipefail
 
 BOLD=$(tput bold  2>/dev/null || true)
@@ -14,7 +15,18 @@ info() { echo "  $*"; }
 warn() { echo "  ${YELLOW}⚠  $*${RESET}"; }
 die()  { echo "${RED}✖ $*${RESET}" >&2; exit 1; }
 
+REPO_URL="https://github.com/riyAdHmobin/Melody-2.0.git"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Bootstrap: when piped through curl, clone the repo first ────────────────
+if [[ ! -f "$SCRIPT_DIR/index.php" ]]; then
+    step "Cloning Melody"
+    sudo apt-get install -y git -qq
+    TMP_DIR=$(mktemp -d)
+    git clone --depth=1 "$REPO_URL" "$TMP_DIR/melody"
+    exec bash "$TMP_DIR/melody/install.sh"
+fi
+
 INSTALL_DIR="/opt/melody"
 CONFIG_DIR="$HOME/.config/melody"
 BIN_PATH="/usr/local/bin/melody"
