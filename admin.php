@@ -3,6 +3,14 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/youtube.php';
 
+set_exception_handler(function(Throwable $e) {
+    http_response_code(500);
+    echo '<div style="font-family:monospace;background:#0a0a0f;color:#f88;padding:32px;min-height:100vh;margin:0;white-space:pre-wrap">';
+    echo '<b>Error:</b> ' . htmlspecialchars($e->getMessage()) . "\n\n";
+    echo htmlspecialchars($e->getTraceAsString());
+    echo '</div>';
+});
+
 melody_session_start();
 
 // ── Logout ──────────────────────────────────────────────────────────────
@@ -65,7 +73,27 @@ button{width:100%;background:#1DB954;color:#000;border:none;border-radius:8px;pa
 endif;
 
 // ── Authenticated: handle mutations ──────────────────────────────────────
-$db  = melody_db();
+try {
+    $db = melody_db();
+} catch (Throwable $e) {
+    ?><!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+    <title>Melody — DB Error</title>
+    <style>body{font-family:system-ui,sans-serif;background:#0a0a0f;color:#f0f0f5;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+    .card{background:#111118;border:1px solid rgba(220,50,50,.3);border-radius:14px;padding:40px;max-width:560px;width:90%}
+    h2{color:#f88;margin:0 0 16px}pre{background:#18181f;padding:14px;border-radius:8px;font-size:.85rem;overflow-x:auto;color:#fca}
+    a{color:#1DB954}</style></head><body>
+    <div class="card">
+        <h2>Database connection failed</h2>
+        <pre><?= htmlspecialchars($e->getMessage()) ?></pre>
+        <p style="margin-top:16px;font-size:.9rem;color:#aaa">
+            Check your credentials in <code>~/.config/melody/.env</code><br>
+            and make sure your host has <strong>Remote MySQL</strong> enabled for your IP.<br><br>
+            <a href="?logout=1">← Log out</a>
+        </p>
+    </div>
+    </body></html><?php
+    exit;
+}
 $msg = '';
 $err = '';
 

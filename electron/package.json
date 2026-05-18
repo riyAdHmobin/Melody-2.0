@@ -1,0 +1,6 @@
+{
+    "name": "melody",
+    "version": "1.0.0",
+    "description": "YouTube playlist manager & music player",
+    "main": "main.js"
+}

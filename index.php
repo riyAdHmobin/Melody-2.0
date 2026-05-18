@@ -58,7 +58,7 @@
             <div class="mode-toggle-wrap">
                 <p class="nav-label">Playback Mode</p>
                 <div class="mode-toggle">
-                    <button onclick="window.open('https://postonce.dev-polygontech.xyz/playlist/', '_blank')" id="" class="mode-btn as-r-btn">
+                    <button onclick="window.location.href='/admin.php'" class="mode-btn as-r-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
                         </svg>

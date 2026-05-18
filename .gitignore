@@ -1,2 +1,5 @@
 .idea
 .env
+electron/node_modules/
+electron/dist/
+electron/icon.png
