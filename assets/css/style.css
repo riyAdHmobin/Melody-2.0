@@ -843,8 +843,8 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
     gap: 8px;
 }
 .timeline-wrap span {
-    font-size: .68rem;
-    color: var(--txt-dim);
+    font-size: .8rem;
+    color: var(--accent);
     font-variant-numeric: tabular-nums;
     width: 30px;
     flex-shrink: 0;
@@ -853,7 +853,7 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
 
 #progress-bar-wrap { flex: 1; cursor: pointer; padding: 8px 0; }
 #progress-bar {
-    height: 3px;
+    height: 5px;
     background: var(--surface-hover);
     border-radius: 99px;
     position: relative;
