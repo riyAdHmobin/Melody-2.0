@@ -664,6 +664,8 @@ body {
     transition: background .15s;
     position: relative;
     animation: track-in .3s var(--ease-smooth) both;
+    min-width: 0;
+    overflow: hidden;
 }
 #track-list li:hover { background: var(--surface-hover); }
 #track-list li.active {
@@ -1009,24 +1011,27 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
 }
 
 /* ═══════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE — TABLET  (≤ 1024 px)
+   Sidebar becomes a slide-in drawer;
+   layout collapses to 2 columns.
 ════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     #app {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto var(--player-h);
+        grid-template-columns: 40% 60%;
+        grid-template-rows: 1fr var(--player-h);
         grid-template-areas:
-            "topbar"
-            "main"
-            "tracklist"
-            "player";
+            "tracklist main"
+            "tracklist player";
     }
 
+    /* Show hamburger topbar inside #main-content */
     #topbar { display: flex; }
+
+    /* Sidebar slides in from left */
     #sidebar {
         position: fixed;
         left: 0; top: 0; bottom: 0;
-        width: 280px;
+        width: var(--sidebar-w);
         transform: translateX(-100%);
         z-index: 500;
     }
@@ -1039,39 +1044,45 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
     }
     #sidebar-overlay.visible { display: block; }
 
-    #now-playing-stage {
-        padding: 20px 16px 12px;
-    }
-    #album-art-wrap { width: 150px; height: 150px; }
-    #art-glow { width: 170px; height: 170px; }
-    #song-title { font-size: 1rem; }
+    /* Slightly smaller art for narrower right column */
+    #now-playing-stage { padding: 20px 20px 14px; }
+    #album-art-wrap { width: 160px; height: 160px; }
+    #art-glow { width: 180px; height: 180px; }
+    #song-title { font-size: 1.1rem; }
+}
 
+/* ═══════════════════════════════════════
+   RESPONSIVE — MOBILE  (≤ 640 px)
+   Single column: stage → tracklist → bar
+════════════════════════════════════════ */
+@media (max-width: 640px) {
+    #app {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 220px var(--player-h);
+        grid-template-areas:
+            "main"
+            "tracklist"
+            "player";
+    }
+
+    /* Tracklist: fixed height strip below stage */
     #tracklist-panel {
-        max-height: 200px;
         border-right: none;
         border-top: 1px solid var(--border);
     }
-    #track-list {
-        grid-template-columns: repeat(1, 1fr);
-    }
 
-    #player-bar {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-        height: auto;
-        padding: 10px 16px;
-        gap: 8px;
-    }
+    /* Compact stage */
+    #now-playing-stage { padding: 14px 14px 10px; }
+    #album-art-wrap { width: 120px; height: 120px; }
+    #art-glow { width: 140px; height: 140px; }
+    #song-title { font-size: .9rem; }
+
+    /* Player bar: controls only, centered */
+    #player-bar { grid-template-columns: 1fr; }
     .player-track-info { display: none; }
     .player-controls { justify-content: center; }
-    .player-timeline-vol { max-width: 100%; justify-self: stretch; }
-    .volume-wrap { display: none; }
-}
+    .player-timeline-vol { display: none; }
 
-@media (max-width: 480px) {
     .ctrl-btn svg { width: 16px; height: 16px; }
     .play-btn { width: 40px; height: 40px; }
-    #track-list {
-        grid-template-columns: 1fr;
-    }
 }
