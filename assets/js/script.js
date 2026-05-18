@@ -890,9 +890,6 @@ function bindEvents() {
         if (e.target === dom.modalOverlay) dom.modalOverlay.classList.add('hidden');
     });
 
-    /* Reset button */
-    document.getElementById('btn-reset').addEventListener('click', resetPlayer);
-
     /* Keyboard shortcuts */
     document.addEventListener('keydown', handleKeyboard);
 
