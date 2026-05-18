@@ -862,11 +862,17 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
 #progress-bar-wrap:hover #progress-bar { height: 5px; }
 #progress-fill {
     height: 100%;
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--accent), rgba(140,255,185,.9), var(--accent));
+    background-size: 200% 100%;
     border-radius: 99px;
     width: 0%;
     transition: width .1s linear;
     pointer-events: none;
+    animation: liquid-progress 2.5s linear infinite;
+}
+@keyframes liquid-progress {
+    0%   { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
 }
 #progress-thumb {
     position: absolute;
@@ -909,6 +915,153 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,.4);
+}
+
+/* ═══════════════════════════════════════
+   LIQUID GLASS EFFECTS
+════════════════════════════════════════ */
+
+/* Aurora gradient blobs — sit behind all panels,
+   blurred by each panel's backdrop-filter to create
+   a soft colour-through-glass refraction effect    */
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(90px);
+}
+body::before {
+    width: 55vw; height: 55vh;
+    top: -12vh; left: -8vw;
+    background: radial-gradient(ellipse, rgba(29,185,84,.20) 0%, transparent 70%);
+    animation: blob-a 22s ease-in-out infinite alternate;
+}
+body::after {
+    width: 50vw; height: 60vh;
+    bottom: -12vh; right: -6vw;
+    background: radial-gradient(ellipse, rgba(110,55,230,.16) 0%, transparent 70%);
+    animation: blob-b 28s ease-in-out infinite alternate;
+}
+@keyframes blob-a {
+    0%   { transform: translate(0,    0   ) scale(1);   }
+    40%  { transform: translate(4vw,  3vh ) scale(1.1); }
+    100% { transform: translate(-2vw, 6vh ) scale(.94); }
+}
+@keyframes blob-b {
+    0%   { transform: translate(0,    0    ) scale(1);   }
+    40%  { transform: translate(-3vw,-4vh  ) scale(1.09);}
+    100% { transform: translate(2vw,  -3vh ) scale(.96); }
+}
+
+/* Enhanced panel backdrops + diagonal light refraction */
+#sidebar {
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.07) 0%, transparent 55%),
+        rgba(10,10,18,.80);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: inset -1px 0 0 rgba(255,255,255,.06);
+}
+
+#tracklist-panel {
+    background:
+        linear-gradient(155deg, rgba(255,255,255,.05) 0%, transparent 50%),
+        rgba(10,10,18,.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+
+#player-bar {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.045) 0%, transparent 100%),
+        rgba(8,8,14,.90);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    position: relative;
+}
+
+/* Hairline top-edge highlight on player bar — simulates
+   light catching the top face of a glass surface         */
+#player-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 8%; right: 8%;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255,255,255,.22),
+        transparent);
+    pointer-events: none;
+}
+
+/* Accent glow line under tracklist header */
+.tracklist-header {
+    position: relative;
+}
+.tracklist-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(29,185,84,.30),
+        transparent);
+    pointer-events: none;
+}
+
+/* Album art ring — layered glow for a glass-lensed look */
+#album-art-wrap {
+    box-shadow:
+        0 0 0 2px rgba(255,255,255,.07),
+        0 0 0 5px rgba(29,185,84,.09),
+        0 24px 60px rgba(0,0,0,.55),
+        0 0 55px rgba(29,185,84,.14);
+}
+
+/* Active track — glass tint + soft inset edge highlights */
+#track-list li.active {
+    background: linear-gradient(135deg,
+        rgba(29,185,84,.14),
+        rgba(29,185,84,.07));
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -1px 0 rgba(29,185,84,.10),
+        0 4px 18px rgba(29,185,84,.10);
+}
+
+/* Playlist nav active — glass pill */
+.playlist-nav li.active button {
+    background: linear-gradient(135deg,
+        rgba(29,185,84,.16),
+        rgba(29,185,84,.06));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Play button — sweeping glass sheen */
+.play-btn {
+    position: relative;
+    overflow: hidden;
+}
+.play-btn::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: -70%;
+    width: 38%; height: 180%;
+    background: rgba(255,255,255,.28);
+    transform: skewX(-18deg);
+    border-radius: 2px;
+    animation: glass-sweep 3.8s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes glass-sweep {
+    0%, 60% { left: -70%; opacity: 0; }
+    65%      { opacity: 1; }
+    80%      { left: 130%; opacity: 0; }
+    100%     { left: 130%; opacity: 0; }
 }
 
 /* ═══════════════════════════════════════
