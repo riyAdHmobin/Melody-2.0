@@ -25,7 +25,7 @@
     --radius:        14px;
     --radius-sm:     8px;
 
-    --font-display: 'Syne', sans-serif;
+    --font-display: 'Space Grotesk', sans-serif;
     --font-body:    'DM Sans', sans-serif;
 
     --ease-smooth: cubic-bezier(.4,0,.2,1);
@@ -106,7 +106,7 @@ body {
 .logo-name {
     display: block;
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 2.25rem;
     font-weight: 800;
     letter-spacing: -.02em;
     color: var(--txt);
@@ -114,7 +114,7 @@ body {
 }
 .logo-tagline {
     display: block;
-    font-size: .62rem;
+    font-size: .76rem;
     color: var(--accent);
     letter-spacing: .07em;
     text-transform: uppercase;
