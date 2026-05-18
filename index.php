@@ -270,17 +270,7 @@
 
         <!-- Timeline + Volume -->
         <div class="player-timeline-vol">
-<!--            <div class="timeline-wrap">-->
-<!--                <span id="time-current">0:00</span>-->
-<!--                <div id="progress-bar-wrap">-->
-<!--                    <div id="progress-bar">-->
-<!--                        <div id="progress-fill"></div>-->
-<!--                        <div id="progress-thumb"></div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <span id="time-total">0:00</span>-->
-<!--            </div>-->
-            <div class="volume-wrap">
+<div class="volume-wrap">
                 <button id="btn-mute" class="ctrl-btn small" title="Mute (M)">
                     <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>

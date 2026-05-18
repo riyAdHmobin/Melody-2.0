@@ -1,9 +1,3 @@
-/* ═══════════════════════════════════════════════════════
-   MELODY — script.js
-   Full music player logic: YouTube IFrame API, playlist
-   management, UI state, localStorage, visualizer, etc.
-═══════════════════════════════════════════════════════ */
-
 'use strict';
 
 /* ─────────────────────────────────────────────────────
@@ -139,8 +133,7 @@ window.onYouTubeIframeAPIReady = function () {
     state.ytPlayer = new YT.Player('youtube-player', {
         height: '100%',
         width: '100%',
-        // host: 'https://www.youtube-nocookie.com',
-        playerVars: {
+playerVars: {
             autoplay:       0,
             controls:       0,
             disablekb:      1,
@@ -209,14 +202,12 @@ function loadTrack(idx, autoplay = false) {
     const track = state.tracks[idx];
     if (!track) return;
 
-    // Update main stage info
     const thumb = `https://img.youtube.com/vi/${track.id}/hqdefault.jpg`;
     dom.albumArt.src = thumb;
     dom.songTitle.textContent = track.title;
     dom.songSub.textContent   = state.playlists[state.activePl]?.name || '';
     dom.artSpinner.classList.add('loading');
 
-    // Update tags
     dom.songTags.innerHTML = '';
     const pl = state.playlists[state.activePl];
     if (pl) {
@@ -226,12 +217,10 @@ function loadTrack(idx, autoplay = false) {
         dom.songTags.appendChild(tag);
     }
 
-    // Update bottom player bar
     dom.playerTitle.textContent   = track.title;
     dom.playerPlaylist.textContent = state.playlists[state.activePl]?.name || '';
     dom.playerThumb.src = thumb;
 
-    // Favorite state
     dom.btnFavorite.classList.toggle('favorited', state.favorites.has(track.id));
 
     // Glow color (cycle based on index)
@@ -239,10 +228,8 @@ function loadTrack(idx, autoplay = false) {
     const h = hues[idx % hues.length];
     dom.artGlow.style.background = `hsla(${h},70%,45%,.5)`;
 
-    // Highlight active in track list
     renderTrackListActive();
 
-    // Load into YouTube player
     if (state.ytReady && state.ytPlayer) {
         if (autoplay) {
             state.ytPlayer.loadVideoById(track.id);
@@ -253,11 +240,9 @@ function loadTrack(idx, autoplay = false) {
         state.ytPlayer.setPlaybackRate(state.speed);
     }
 
-    // Reset progress
     dom.progressFill.style.width = '0%';
     dom.timeCurrent.textContent  = '0:00';
 
-    // Scroll track into view
     scrollTrackIntoView(idx);
 
     saveStorage();
@@ -438,7 +423,6 @@ function seekTo(e) {
     10.  PLAYLIST LOADING
 ───────────────────────────────────────────────── */
 async function initPlaylists() {
-    // Fetch playlists from API and merge with defaults
     const sources = await getPlaylistSources();
     state.playlists = sources.map(p => ({ ...p, tracks: [] }));
     // Custom ones are already pushed by loadStorage before initPlaylists
@@ -457,11 +441,9 @@ async function loadPlaylist(idx) {
 
     let tracks = [];
 
-    // If playlist already has cached tracks, use them
     if (pl.tracks && pl.tracks.length > 0) {
         tracks = pl.tracks;
     } else if (pl.api) {
-        // Try real API
         try {
             const res  = await fetch(pl.api);
             const data = await res.json();
@@ -539,13 +521,11 @@ function renderTrackList() {
       </button>
     `;
 
-        // Click to play
         li.addEventListener('click', e => {
             if (e.target.closest('.track-fav-btn')) return;
             playTrack(realIdx);
         });
 
-        // Favorite button
         li.querySelector('.track-fav-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             toggleFavorite(track.id, li.querySelector('.track-fav-btn'));
@@ -863,7 +843,6 @@ function bindEvents() {
 }
 
 function handleKeyboard(e) {
-    // Don't fire on input elements
     if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
 
     switch (e.code) {
@@ -899,7 +878,6 @@ function addCustomPlaylist() {
     dom.modalName.value = '';
     dom.modalApi.value  = '';
     renderPlaylistNav();
-    // Load the new playlist
     loadPlaylist(state.playlists.length - 1);
 }
 
@@ -928,16 +906,12 @@ async function boot() {
     initParticles();
     initVisualizer();
 
-    // Load default playlist
     const startPl = Math.min(state.activePl, state.playlists.length - 1);
     loadPlaylist(startPl);
 }
 
 function resetPlayer() {
-    // Clear localStorage
     localStorage.removeItem(LS_KEY);
-
-    // Reset state to defaults
     state.volume = 80;
     state.loopMode = 'none';
     state.isShuffle = false;
@@ -947,8 +921,6 @@ function resetPlayer() {
     state.activePl = 0;
     state.currentIdx = -1;
     state.isPlaying = false;
-
-    // Reinitialize
     boot();
 }
 

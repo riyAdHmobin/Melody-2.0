@@ -1,0 +1,8 @@
+# Block direct access to config.php
+<Files "config.php">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Serve index.php as directory index
+DirectoryIndex index.php index.html

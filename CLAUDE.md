@@ -1,84 +1,109 @@
-@# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Melody is a YouTube playlist manager and music player with two independent components:
-- **Frontend**: Vanilla JS/HTML/CSS web app — no framework, no build step
-- **Backend**: WordPress plugin (`wp-plugins/melody-playlists-v2/`) that exposes a REST API
+Melody is a self-contained YouTube playlist manager and music player.  
+It runs as a **standalone PHP + MySQL application** — no WordPress, no external backend.
 
-## Development Workflow
+## Running the project
 
-No build process exists. To develop the frontend, open `index.html` directly in a browser or serve it with any static file server:
+### Docker (recommended)
 
 ```bash
-python3 -m http.server 8080
-# or
-npx serve .
+cp .env.example .env          # fill in passwords if needed
+docker compose up --build     # builds the PHP/Apache image and starts MySQL
+# First run only: create DB tables
+curl http://localhost:8080/setup.php
+# Then delete setup.php (or just leave it — it's safe to re-run)
 ```
 
-For WordPress plugin development, copy `wp-plugins/melody-playlists-v2/` into a WordPress installation's `wp-content/plugins/` directory and activate it.
+Player → http://localhost:8080  
+Admin  → http://localhost:8080/admin.php  (default: admin / melody)
 
-The production WordPress backend is at: `https://postonce.dev-polygontech.xyz`
+### Local PHP + existing MySQL
+
+```bash
+# Edit config.php (or set env vars) with your DB credentials
+# Create the melody database, then:
+php -S localhost:8080
+# Visit http://localhost:8080/setup.php to create tables
+```
 
 ## Architecture
 
-### Frontend
-
-**Entry point**: `index.html` → loads `assets/js/sources.js` then `assets/js/script.js`.
-
-**`assets/js/sources.js`** — fetches the playlist list from the WordPress REST API:
 ```
-GET /wp-json/melody/v1/playlists
+index.php          — Player UI (vanilla JS, served by PHP)
+admin.php          — Password-protected playlist/track CRUD
+setup.php          — One-time table creation (delete after first run)
+config.php         — DB credentials + admin hash (reads from env vars)
+.env               — Local environment overrides (gitignored)
+.env.example       — Template to copy
+
+includes/
+  db.php           — PDO MySQL connection + melody_create_tables()
+  auth.php         — Session-based login (melody_login / melody_logout)
+  youtube.php      — melody_extract_youtube_id(), melody_get_youtube_title() via oEmbed, melody_slugify()
+
+api/
+  playlists.php    — GET → JSON list of all playlists with demo tracks
+  playlist.php     — GET ?slug=xxx → JSON array of tracks for one playlist
+
+assets/
+  css/style.css    — Dark glassmorphism theme
+  js/sources.js    — Fetches /api/playlists.php; falls back to empty list
+  js/script.js     — All player logic (~955 lines)
+  icons/logo.svg
+
+Dockerfile         — php:8.2-apache + pdo_mysql
+docker-compose.yml — app (port 8080) + db (MySQL 8)
+wp-plugins/        — Legacy WordPress plugin (archived, not used)
 ```
-Falls back to demo data if the API is unreachable.
 
-**`assets/js/script.js`** (~955 lines) — all player logic:
-- Central `state` object holds everything (playlists, tracks, player instance, playback settings, favorites)
-- `dom` object holds all ~50 DOM references
-- `bindEvents()` wires all event listeners at startup
-- Persistence: `saveState()` / `loadState()` sync to `localStorage` under the key `melody_v2`
-- YouTube playback via the IFrame API (`onYouTubeIframeAPIReady` global callback)
-- Two Canvas animations running on `requestAnimationFrame`: visualizer (60 bars) and background particles
+### API response format
 
-**LocalStorage persists**: volume, loop mode, shuffle, autoplay, speed, favorites, custom playlists, active playlist index.
-
-**Custom playlists** are frontend-only (localStorage) — they are not sent to WordPress.
-
-**Track data shape**:
-```js
-{ id: "YouTubeVideoId", title: "Video Title", url: "https://www.youtube.com/watch?v=..." }
-```
-
-### WordPress Plugin (`wp-plugins/melody-playlists-v2/`)
-
-| File | Purpose |
-|------|---------|
-| `melody-playlists.php` | Plugin bootstrap, requires all includes |
-| `includes/api.php` | REST endpoints (`/wp-json/melody/v1/playlists`, `/wp-json/melody/v1/playlist/{slug}`) |
-| `includes/db.php` | DB schema creation on activation (`wp_melody_playlists`, `wp_melody_videos`) |
-| `includes/youtube.php` | Extracts YouTube video ID from URL; fetches title via oEmbed |
-| `includes/auth.php` | Session-based admin login (bcrypt password stored as PHP constant) |
-| `includes/shortcode.php` | `[melody_playlist_manager]` shortcode — admin CRUD UI |
-
-**API response format** (from `GET /playlists`):
+`GET /api/playlists.php`:
 ```json
 [
   {
     "name": "Playlist Name",
-    "api": "https://.../wp-json/melody/v1/playlist/slug",
+    "api":  "/api/playlist.php?slug=playlist-name",
     "demo": [{ "id": "ytId", "title": "...", "url": "..." }]
   }
 ]
 ```
 
-The plugin uses `$wpdb` directly (no ORM), procedural PHP (no classes), and WordPress sessions for auth — no JWT or nonces.
+`GET /api/playlist.php?slug=playlist-name`:
+```json
+[{ "id": "ytId", "title": "...", "url": "..." }]
+```
+
+### Track data shape
+```js
+{ id: "YouTubeVideoId", title: "Video Title", url: "https://www.youtube.com/watch?v=..." }
+```
+
+### Database schema
+```sql
+melody_playlists (id, name, slug UNIQUE, created_at)
+melody_videos    (id, playlist_id FK, youtube_id, title, youtube_url, created_at)
+```
+
+### Player (script.js)
+- Central `state` object holds everything (playlists, tracks, player instance, playback settings, favorites)
+- `dom` object holds all ~50 DOM references
+- `bindEvents()` wires all event listeners at startup
+- Persistence: `saveStorage()` / `loadStorage()` sync to `localStorage` under the key `melody_v2`
+- YouTube playback via the IFrame API (`onYouTubeIframeAPIReady` global callback)
+- Two Canvas animations: visualizer (60 bars) and background particles
+
+**LocalStorage persists**: volume, loop mode, shuffle, autoplay, speed, favorites, custom playlists, active playlist index.
 
 ## Key Constraints
 
 - **No build tooling** — do not introduce bundlers, TypeScript, or npm without discussing first
 - **No framework** — the frontend is intentionally vanilla JS
-- The API base URL is hardcoded in `sources.js`; changing it requires editing that file
-- The admin password hash is hardcoded in `includes/auth.php`
-- `wp-plugins/melody-playlists-v1/` is the legacy version — prefer `v2` for all changes
+- Admin password hash is set via `MELODY_ADMIN_PASS_HASH` env var (or `config.php` fallback)
+  - Generate a new hash: `php -r "echo password_hash('yourpassword', PASSWORD_BCRYPT);"`
+- `wp-plugins/` is archived — do not modify it

@@ -1,0 +1,40 @@
+services:
+
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-melody}
+      DB_USER: ${DB_USER:-melody}
+      DB_PASS: ${DB_PASS:-melody}
+      MELODY_ADMIN_USER: ${MELODY_ADMIN_USER:-admin}
+      # Hash for "melody" — set MELODY_ADMIN_PASS_HASH in .env to override.
+      # Generate: php -r "echo password_hash('yourpassword', PASSWORD_BCRYPT);"
+      # Fallback is also defined in config.php so this var is optional.
+      MELODY_ADMIN_PASS_HASH: ${MELODY_ADMIN_PASS_HASH:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-melody}
+      MYSQL_USER: ${DB_USER:-melody}
+      MYSQL_PASSWORD: ${DB_PASS:-melody}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+    volumes:
+      - melody_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  melody_db:
