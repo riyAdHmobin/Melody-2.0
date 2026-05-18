@@ -124,6 +124,26 @@
     <div id="sidebar-overlay"></div>
 
     <!-- ═══════════════════════════════════════
+         MIDDLE — TRACK LIST
+    ════════════════════════════════════════ -->
+    <section id="tracklist-panel">
+        <div class="tracklist-header">
+            <h2 id="tracklist-title">Tracks</h2>
+            <span id="tracklist-count"></span>
+            <button id="btn-add-playlist" title="Add custom playlist source">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </button>
+        </div>
+        <div id="tracklist-loading" class="loading-state">
+            <div class="spinner"></div>
+            <span>Loading tracks…</span>
+        </div>
+        <ul id="track-list"></ul>
+    </section>
+
+    <!-- ═══════════════════════════════════════
          MAIN CONTENT
     ════════════════════════════════════════ -->
     <main id="main-content">
@@ -198,24 +218,6 @@
             </div>
 
 
-        </section>
-
-        <!-- Track List Panel -->
-        <section id="tracklist-panel">
-            <div class="tracklist-header">
-                <h2 id="tracklist-title">Tracks</h2>
-                <span id="tracklist-count"></span>
-                <button id="btn-add-playlist" title="Add custom playlist source">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                </button>
-            </div>
-            <div id="tracklist-loading" class="loading-state">
-                <div class="spinner"></div>
-                <span>Loading tracks…</span>
-            </div>
-            <ul id="track-list"></ul>
         </section>
 
     </main>

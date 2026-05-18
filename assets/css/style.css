@@ -62,11 +62,11 @@ body {
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-columns: 15% 40% 45%;
     grid-template-rows: 1fr var(--player-h);
     grid-template-areas:
-    "sidebar main"
-    "sidebar player";
+        "sidebar tracklist main"
+        "sidebar tracklist player";
     height: 100vh;
     overflow: hidden;
 }
@@ -579,11 +579,10 @@ body {
 
 /* Track List Panel */
 #tracklist-panel {
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    max-height: 200px;
+    grid-area: tracklist;
+    border-right: 1px solid var(--border);
     overflow-y: auto;
-    overflow-x: hidden ;
+    overflow-x: hidden;
     background: rgba(10,10,18,.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -650,7 +649,7 @@ body {
     list-style: none;
     padding: 8px;
     display: grid;
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 4px;
 }
 #track-list li {
@@ -999,10 +998,13 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
    MINI-PLAYER MODE
 ════════════════════════════════════════ */
 #app.mini-mode #main-content { display: none; }
+#app.mini-mode #tracklist-panel { display: none; }
 #app.mini-mode {
-    grid-template-columns: var(--sidebar-w) 0;
+    grid-template-columns: 25% 75%;
     grid-template-rows: 0 var(--player-h);
-    grid-template-areas: "sidebar player" "sidebar player";
+    grid-template-areas:
+        "sidebar player"
+        "sidebar player";
     height: var(--player-h);
 }
 
@@ -1014,10 +1016,10 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr auto var(--player-h);
         grid-template-areas:
-      "topbar"
-      "main"
-      "tracklist"
-      "player";
+            "topbar"
+            "main"
+            "tracklist"
+            "player";
     }
 
     #topbar { display: flex; }
@@ -1037,8 +1039,6 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
     }
     #sidebar-overlay.visible { display: block; }
 
-    #app { grid-template-areas: "topbar" "main" "player"; }
-
     #now-playing-stage {
         padding: 20px 16px 12px;
     }
@@ -1046,7 +1046,11 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
     #art-glow { width: 170px; height: 170px; }
     #song-title { font-size: 1rem; }
 
-    #tracklist-panel { max-height: 200px; }
+    #tracklist-panel {
+        max-height: 200px;
+        border-right: none;
+        border-top: 1px solid var(--border);
+    }
     #track-list {
         grid-template-columns: repeat(1, 1fr);
     }
