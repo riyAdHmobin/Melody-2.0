@@ -21,6 +21,17 @@ Admin  → http://localhost:8080/admin.php  (default: admin / melody)
 
 Tables are created automatically on first DB connection — no setup step needed.
 
+### Electron desktop app (Ubuntu/Debian)
+
+```bash
+bash install.sh   # first time: installs deps, copies to /opt/melody, prompts for DB + admin creds
+melody            # launch after install
+bash update.sh    # pull latest and rsync to /opt/melody
+bash uninstall.sh # remove
+```
+
+The installer writes DB credentials and the admin password hash to `~/.config/melody/.env` (mode 600). Electron reads this file at startup and injects the vars into the PHP process environment.
+
 ### Local PHP + existing MySQL
 
 ```bash
@@ -44,15 +55,24 @@ includes/
 api/
   playlists.php    — GET → all playlists, each with full track list embedded in "demo" field
   playlist.php     — GET ?slug=xxx → track array for one playlist
+  favorites.php    — GET → [ytId, ...]; POST {id} → toggle favorite (add/remove), returns {action, id}
 
 assets/
   css/style.css    — Dark glassmorphism theme
   js/sources.js    — getPlaylistSources(): fetches /api/playlists.php, merges with DEFAULT_PLAYLIST_SOURCES
-  js/script.js     — All player logic (~926 lines)
+  js/script.js     — All player logic (~991 lines)
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
+
+electron/
+  main.js          — Electron entry: spawns `php -S` on a free port, reads config from ~/.config/melody/.env
+  package.json     — Electron app manifest (no npm deps; uses globally installed electron)
 
 Dockerfile         — php:8.2-apache + pdo_mysql
 docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated)
+
+install.sh         — Ubuntu/Debian installer: installs php-cli, Node 20, electron globally, copies app to /opt/melody, creates launcher + .desktop entry, prompts for DB creds + admin password
+update.sh          — Pulls latest changes (git pull or clone) then rsyncs to /opt/melody/
+uninstall.sh       — Removes /opt/melody, /usr/local/bin/melody, .desktop entry, optionally ~/.config/melody/
 ```
 
 ### API response format
@@ -76,8 +96,9 @@ docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated)
 
 ### Database schema
 ```sql
-melody_playlists (id, name, slug UNIQUE, created_at)
-melody_videos    (id, playlist_id FK, youtube_id, title, youtube_url, created_at)
+melody_playlists  (id, name, slug UNIQUE, created_at)
+melody_videos     (id, playlist_id FK, youtube_id, title, youtube_url, created_at)
+melody_favorites  (id, youtube_id UNIQUE, created_at)
 ```
 
 ### Player (script.js)
@@ -90,6 +111,7 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 - `saveStorage()` / `loadStorage()` persist to `localStorage` under key `melody_v2`
 - Two canvas animations run always: 60-bar simulated visualizer and ambient particles
 - Custom (user-added) playlists are flagged `{ custom: true }` and round-trip through localStorage only
+- Favorites are stored in both localStorage and `melody_favorites` DB table; on boot, `/api/favorites.php` is fetched and overwrites the localStorage set (localStorage is the fallback when DB is unreachable)
 
 **localStorage persists**: volume, loop mode, shuffle, autoplay, speed, favorites, custom playlists, active playlist index.
 
@@ -99,3 +121,4 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 - **No framework** — the frontend is intentionally vanilla JS
 - Admin password hash is set via `MELODY_ADMIN_PASS_HASH` env var (or `config.php` fallback)
   - Generate: `php -r "echo password_hash('yourpassword', PASSWORD_BCRYPT);"`
+- **`.env.example` contains real credentials in comments** — do not copy those values; they are a leftover and should be removed
