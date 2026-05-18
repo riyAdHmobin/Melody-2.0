@@ -559,7 +559,7 @@ function escHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function truncTitle(s, n = 32) {
+function truncTitle(s, n = 16) {
     return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
