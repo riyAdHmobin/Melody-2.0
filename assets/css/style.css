@@ -1148,9 +1148,28 @@ body::after {
 /* ═══════════════════════════════════════
    MINI-PLAYER MODE
 ════════════════════════════════════════ */
+
+/* Progress strip — hidden by default, shown in mini mode */
+#mini-progress {
+    display: none;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(255,255,255,.07);
+    pointer-events: none;
+}
+#mini-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+    transition: width .5s linear;
+}
+
 #app.mini-mode #main-content { display: none; }
 #app.mini-mode #tracklist-panel { display: none; }
 #app.mini-mode {
+    --player-h: 88px;
     grid-template-columns: 25% 75%;
     grid-template-rows: 0 var(--player-h);
     grid-template-areas:
@@ -1158,6 +1177,28 @@ body::after {
         "sidebar player";
     height: var(--player-h);
 }
+
+/* Larger art thumbnail */
+#app.mini-mode #player-thumb {
+    width: 58px;
+    height: 58px;
+    border-radius: 10px;
+    box-shadow: 0 0 14px var(--accent-glow);
+}
+
+/* Bigger, unrestricted title */
+#app.mini-mode #player-title {
+    font-size: .98rem;
+    max-width: none;
+}
+
+/* Readable playlist label */
+#app.mini-mode #player-playlist {
+    font-size: .76rem;
+}
+
+/* Reveal progress strip */
+#app.mini-mode #mini-progress { display: block; }
 
 /* ═══════════════════════════════════════
    RESPONSIVE — TABLET  (≤ 1024 px)

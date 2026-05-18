@@ -267,6 +267,9 @@
             </div>
         </div>
 
+        <!-- Mini-mode progress strip (hidden in normal mode) -->
+        <div id="mini-progress"><div id="mini-progress-fill"></div></div>
+
     </footer>
 
 </div><!-- /#app -->

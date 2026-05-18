@@ -81,8 +81,9 @@ const dom = {
     modalApi:        $('modal-api'),
     modalCancel:     $('modal-cancel'),
     modalSave:       $('modal-save'),
-    visualizerCanvas: $('visualizer-canvas'),
-    particlesCanvas:  $('particles-canvas'),
+    visualizerCanvas:    $('visualizer-canvas'),
+    particlesCanvas:     $('particles-canvas'),
+    miniProgressFill:    $('mini-progress-fill'),
 };
 
 /* ─────────────────────────────────────────────────────
@@ -241,8 +242,9 @@ function loadTrack(idx, autoplay = false) {
         state.ytPlayer.setPlaybackRate(state.speed);
     }
 
-    dom.progressFill.style.width = '0%';
-    dom.timeCurrent.textContent  = '0:00';
+    dom.progressFill.style.width     = '0%';
+    dom.miniProgressFill.style.width = '0%';
+    dom.timeCurrent.textContent      = '0:00';
 
     scrollTrackIntoView(idx);
 
@@ -405,6 +407,7 @@ function updateProgress() {
             const pct = (current / duration) * 100;
             dom.progressFill.style.width = pct + '%';
             dom.progressBar.querySelector('#progress-thumb').style.left = pct + '%';
+            dom.miniProgressFill.style.width = pct + '%';
         }
         dom.timeCurrent.textContent = formatTime(current);
         dom.timeTotal.textContent   = formatTime(duration);
