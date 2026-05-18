@@ -10,7 +10,7 @@ try {
     $playlists = $db->query("SELECT * FROM melody_playlists ORDER BY id DESC")->fetchAll();
 
     $response = [];
-    $stmt = $db->prepare("SELECT * FROM melody_videos WHERE playlist_id = ? ORDER BY id ASC");
+    $stmt = $db->prepare("SELECT * FROM melody_videos WHERE playlist_id = ? ORDER BY position ASC, id ASC");
 
     foreach ($playlists as $pl) {
         $stmt->execute([$pl->id]);
@@ -24,6 +24,7 @@ try {
 
         $response[] = [
             'name' => $pl->name,
+            'slug' => $pl->slug,
             'api'  => '/api/playlist.php?slug=' . urlencode($pl->slug),
             'demo' => $demo,
         ];

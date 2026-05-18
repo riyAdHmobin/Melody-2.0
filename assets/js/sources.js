@@ -13,6 +13,7 @@ async function getPlaylistSources() {
             apiPlaylists.forEach(playlist => {
                 sources.push({
                     name: playlist.name || 'Untitled',
+                    slug: playlist.slug || '',
                     api:  playlist.api  || '',
                     demo: playlist.demo || [],
                 });

@@ -41,5 +41,16 @@ function melody_db(): PDO {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    // Add position column to melody_videos if not yet present
+    $has_position = $pdo->query("
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = 'melody_videos'
+          AND COLUMN_NAME  = 'position'
+    ")->fetchColumn();
+    if (!$has_position) {
+        $pdo->exec("ALTER TABLE melody_videos ADD COLUMN position INT UNSIGNED NOT NULL DEFAULT 0");
+    }
+
     return $pdo;
 }

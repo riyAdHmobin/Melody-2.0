@@ -735,6 +735,26 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
 .track-fav-btn.faved { color: #e25555; display: block; }
 .track-fav-btn svg { width: 14px; height: 14px; display: block; }
 
+/* Drag handle */
+.track-drag-handle {
+    color: var(--txt-muted);
+    cursor: grab;
+    opacity: 0;
+    transition: opacity .15s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    margin-right: -4px;
+}
+.track-drag-handle svg { width: 8px; height: 14px; display: block; }
+.track-drag-handle:active { cursor: grabbing; }
+#track-list li:hover .track-drag-handle { opacity: 0.45; }
+
+/* Drag states */
+#track-list li.dragging { opacity: 0.3; }
+#track-list li.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+
 /* ═══════════════════════════════════════
    PLAYER BAR
 ════════════════════════════════════════ */
@@ -1275,4 +1295,82 @@ body::after {
 
     .ctrl-btn svg { width: 16px; height: 16px; }
     .play-btn { width: 40px; height: 40px; }
+}
+
+/* ═══════════════════════════════════════
+   CONTEXT MENU
+════════════════════════════════════════ */
+#ctx-menu {
+    position: fixed;
+    z-index: 900;
+    min-width: 160px;
+    padding: 6px;
+    border-radius: 12px;
+    background:
+        linear-gradient(155deg, rgba(255,255,255,.09) 0%, transparent 60%),
+        rgba(14,14,22,.88);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 8px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+    transform-origin: top left;
+    animation: ctx-in .12s var(--ease-spring) both;
+}
+#ctx-menu.hidden { display: none; }
+
+@keyframes ctx-in {
+    from { opacity: 0; transform: scale(.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+#ctx-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--txt);
+    font: 500 .82rem var(--font-display);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .12s, color .12s;
+}
+#ctx-menu button svg {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    color: var(--accent);
+}
+#ctx-menu button:hover {
+    background: rgba(255,255,255,.08);
+    color: var(--accent);
+}
+
+/* ═══════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+#toast {
+    position: fixed;
+    bottom: calc(var(--player-h) + 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: rgba(14,14,22,.90);
+    border: 1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    color: var(--txt);
+    font: 500 .8rem var(--font-display);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s, transform .2s;
+    z-index: 950;
+}
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }

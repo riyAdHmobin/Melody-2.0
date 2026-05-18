@@ -287,6 +287,19 @@
     </div>
 </div>
 
+<!-- ─── Track Context Menu ─── -->
+<div id="ctx-menu" class="hidden" role="menu" aria-label="Track options">
+    <button id="ctx-play-next" role="menuitem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+        Play Next
+    </button>
+</div>
+
+<!-- ─── Toast ─── -->
+<div id="toast" aria-live="polite"></div>
+
 <!-- ─── YouTube IFrame API ─── -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="assets/js/sources.js"></script>

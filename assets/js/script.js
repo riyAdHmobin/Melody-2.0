@@ -22,7 +22,10 @@ const state = {
     ytReady:          false,
     seekDragging:     false,
     progressInterval: null,
+    ctxTrackIdx:      -1,
 };
+
+let dragSrcIdx = -1;
 
 /* ─────────────────────────────────────────────────────
    3.  DOM REFS
@@ -84,6 +87,9 @@ const dom = {
     visualizerCanvas:    $('visualizer-canvas'),
     particlesCanvas:     $('particles-canvas'),
     miniProgressFill:    $('mini-progress-fill'),
+    ctxMenu:             $('ctx-menu'),
+    ctxPlayNext:         $('ctx-play-next'),
+    toast:               $('toast'),
 };
 
 /* ─────────────────────────────────────────────────────
@@ -224,11 +230,6 @@ function loadTrack(idx, autoplay = false) {
     dom.playerThumb.src = thumb;
 
     dom.btnFavorite.classList.toggle('favorited', state.favorites.has(track.id));
-
-    // Glow color (cycle based on index)
-    const hues = [142, 200, 270, 30, 350, 60];
-    const h = hues[idx % hues.length];
-    dom.artGlow.style.background = `hsla(${h},70%,45%,.5)`;
 
     renderTrackListActive();
 
@@ -510,7 +511,16 @@ function renderTrackList() {
         li.className = isActive ? 'active' : '';
         li.style.animationDelay = `${visIdx * 30}ms`;
 
+        const canDrag = !state.searchQuery;
+
         li.innerHTML = `
+      ${canDrag ? `<span class="track-drag-handle" draggable="true" aria-hidden="true">
+        <svg viewBox="0 0 8 14" fill="currentColor">
+          <circle cx="2" cy="2"  r="1.1"/><circle cx="6" cy="2"  r="1.1"/>
+          <circle cx="2" cy="7"  r="1.1"/><circle cx="6" cy="7"  r="1.1"/>
+          <circle cx="2" cy="12" r="1.1"/><circle cx="6" cy="12" r="1.1"/>
+        </svg>
+      </span>` : ''}
       <span class="track-num">${visIdx + 1}</span>
       <div class="track-eq" aria-hidden="true">
         <span></span><span></span><span></span>
@@ -528,8 +538,46 @@ function renderTrackList() {
 
         li.addEventListener('click', e => {
             if (e.target.closest('.track-fav-btn')) return;
+            if (e.target.closest('.track-drag-handle')) return;
             playTrack(realIdx);
         });
+
+        if (canDrag) {
+            const handle = li.querySelector('.track-drag-handle');
+
+            handle.addEventListener('dragstart', e => {
+                dragSrcIdx = realIdx;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', realIdx);
+                e.dataTransfer.setDragImage(li, e.offsetX + handle.offsetLeft, e.offsetY + 8);
+                setTimeout(() => li.classList.add('dragging'), 0);
+            });
+
+            handle.addEventListener('dragend', () => {
+                li.classList.remove('dragging');
+                dom.trackList.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                dragSrcIdx = -1;
+            });
+
+            li.addEventListener('dragover', e => {
+                if (dragSrcIdx === -1) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                dom.trackList.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                li.classList.add('drag-over');
+            });
+
+            li.addEventListener('dragleave', e => {
+                if (!li.contains(e.relatedTarget)) li.classList.remove('drag-over');
+            });
+
+            li.addEventListener('drop', e => {
+                e.preventDefault();
+                const targetIdx = parseInt(li.dataset.idx);
+                li.classList.remove('drag-over');
+                reorderTrack(dragSrcIdx, targetIdx);
+            });
+        }
 
         li.querySelector('.track-fav-btn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -896,6 +944,27 @@ function bindEvents() {
     /* Keyboard shortcuts */
     document.addEventListener('keydown', handleKeyboard);
 
+    /* Context menu — right-click on track list items */
+    dom.trackList.addEventListener('contextmenu', e => {
+        const li = e.target.closest('li[data-idx]');
+        if (!li) return;
+        showCtxMenu(e, parseInt(li.dataset.idx));
+    });
+
+    dom.ctxPlayNext.addEventListener('click', () => {
+        queuePlayNext(state.ctxTrackIdx);
+        hideCtxMenu();
+    });
+
+    /* Close context menu on any click outside, scroll, or Escape */
+    document.addEventListener('click', e => {
+        if (!dom.ctxMenu.contains(e.target)) hideCtxMenu();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') hideCtxMenu();
+    }, true);
+    document.addEventListener('scroll', hideCtxMenu, true);
+
 }
 
 function handleKeyboard(e) {
@@ -946,12 +1015,94 @@ function applySavedState() {
     dom.btnLoop.classList.toggle('active', state.loopMode !== 'none');
     setShuffle(state.isShuffle);
     dom.toggleAutoplay.checked = state.autoplay;
-    dom.speedSelect.value      = state.speed;
+    if (dom.speedSelect) dom.speedSelect.value = state.speed;
     setPlaybackMode(state.playbackMode);
 }
 
+
 /* ─────────────────────────────────────────────────────
-    21.  BOOT
+   22.  CONTEXT MENU (Play Next)
+───────────────────────────────────────────────────── */
+let _toastTimer = null;
+
+function showToast(msg) {
+    dom.toast.textContent = msg;
+    dom.toast.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => dom.toast.classList.remove('show'), 2400);
+}
+
+function showCtxMenu(e, realIdx) {
+    e.preventDefault();
+    state.ctxTrackIdx = realIdx;
+
+    const menu = dom.ctxMenu;
+    menu.classList.remove('hidden');
+
+    // Position near cursor, clamped to viewport
+    const mw = 180, mh = 48;
+    const x = Math.min(e.clientX, window.innerWidth  - mw - 8);
+    const y = Math.min(e.clientY, window.innerHeight - mh - 8);
+    menu.style.left = x + 'px';
+    menu.style.top  = y + 'px';
+}
+
+function hideCtxMenu() {
+    dom.ctxMenu.classList.add('hidden');
+    state.ctxTrackIdx = -1;
+}
+
+function reorderTrack(srcIdx, targetIdx) {
+    if (srcIdx === targetIdx || srcIdx === -1) return;
+
+    const currentTrack = state.tracks[state.currentIdx]; // keep ref; find it again after splice
+    const dragged = state.tracks.splice(srcIdx, 1)[0];
+
+    // After removal, find where the drop target now sits
+    const newTarget = srcIdx < targetIdx ? targetIdx - 1 : targetIdx;
+    state.tracks.splice(newTarget, 0, dragged);
+
+    // Restore currentIdx by reference — no index math needed
+    state.currentIdx = state.tracks.indexOf(currentTrack);
+
+    renderTrackList();
+    persistTrackOrder();
+}
+
+function persistTrackOrder() {
+    const pl = state.playlists[state.activePl];
+    if (!pl || pl.custom || !pl.slug) return; // custom playlists live in localStorage only
+
+    fetch('/api/order.php', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+            playlist_slug: pl.slug,
+            order: state.tracks.map(t => t.id),
+        }),
+    }).catch(() => {}); // fire-and-forget; in-memory order is already correct
+}
+
+function queuePlayNext(realIdx) {
+    const track = state.tracks[realIdx];
+    if (!track || realIdx === state.currentIdx) return;
+
+    // Remove from current position
+    state.tracks.splice(realIdx, 1);
+
+    // If the removed track was before the current, shift currentIdx down
+    if (realIdx < state.currentIdx) state.currentIdx--;
+
+    // Insert immediately after current
+    const insertAt = state.currentIdx + 1;
+    state.tracks.splice(insertAt, 0, track);
+
+    renderTrackList();
+    showToast(`"${truncTitle(track.title, 28)}" plays next`);
+}
+
+/* ─────────────────────────────────────────────────────
+    23.  BOOT
 ───────────────────────────────────────────────── */
 async function boot() {
     await initPlaylists();

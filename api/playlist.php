@@ -24,7 +24,7 @@ try {
         exit;
     }
 
-    $stmt = $db->prepare("SELECT * FROM melody_videos WHERE playlist_id = ? ORDER BY id ASC");
+    $stmt = $db->prepare("SELECT * FROM melody_videos WHERE playlist_id = ? ORDER BY position ASC, id ASC");
     $stmt->execute([$pl->id]);
     $videos = $stmt->fetchAll();
 
