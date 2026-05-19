@@ -124,8 +124,7 @@ body.electron #app {
     border-right: 1px solid var(--border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     z-index: 100;
     transition: transform .3s var(--ease-smooth);
 }
@@ -135,7 +134,8 @@ body.electron #app {
     display: flex;
     flex-direction: column;
     gap: 28px;
-    min-height: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 /* Logo */
@@ -241,7 +241,12 @@ body.electron #app {
 }
 
 /* Playlist Nav */
-.playlist-nav { }
+.playlist-nav {
+    flex: 1;
+    min-height: 60px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 .playlist-nav ul {
     list-style: none;
     display: flex;
