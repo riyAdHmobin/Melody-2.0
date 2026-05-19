@@ -62,7 +62,7 @@ body {
     padding: 0 8px;
     gap: 2px;
     -webkit-app-region: drag; /* full bar is the drag handle */
-    background: rgba(8,8,14,.60);
+    background: rgb(8 8 14 / 0.08);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255,255,255,.05);
@@ -72,7 +72,6 @@ body.electron #win-controls { display: flex; }
 /* Shift app grid down so it sits below the title bar */
 body.electron #app {
     margin-top: 32px;
-    background: red;
     height: calc(100vh - 32px);
 }
 
