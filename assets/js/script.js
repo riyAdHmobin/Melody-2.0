@@ -625,13 +625,19 @@ function truncTitle(s, n = 16) {
 function renderPlaylistNav() {
     dom.playlistList.innerHTML = '';
 
-    // All songs pseudo-playlist
+    // All songs pseudo-playlist — count unique ids across all playlists
+    const allSeen = new Set();
+    for (const pl of state.playlists) {
+        const src = pl.tracks?.length ? pl.tracks : (pl.demo || []);
+        for (const t of src) allSeen.add(t.id);
+    }
+    const allCount = allSeen.size;
     const allLi = document.createElement('li');
     allLi.className = state.allActive ? 'active' : '';
     allLi.innerHTML = `
       <button>
         <span class="pl-dot all-pl-dot"></span>
-        All Songs
+        All Songs${allCount ? ` <span class="pl-count">${allCount}</span>` : ''}
       </button>`;
     allLi.querySelector('button').addEventListener('click', loadAllView);
     dom.playlistList.appendChild(allLi);
@@ -643,18 +649,19 @@ function renderPlaylistNav() {
     favLi.innerHTML = `
       <button>
         <span class="pl-dot fav-pl-dot"></span>
-        Favorites${favCount ? ` (${favCount})` : ''}
+        Favorites${favCount ? ` <span class="pl-count">${favCount}</span>` : ''}
       </button>`;
     favLi.querySelector('button').addEventListener('click', loadFavoritesView);
     dom.playlistList.appendChild(favLi);
 
     state.playlists.forEach((pl, idx) => {
+        const count = pl.tracks?.length || pl.demo?.length || 0;
         const li  = document.createElement('li');
         li.className = (!state.favoritesActive && !state.allActive && idx === state.activePl) ? 'active' : '';
         li.innerHTML = `
       <button>
         <span class="pl-dot"></span>
-        ${escHtml(pl.name)}
+        ${escHtml(pl.name)}${count ? ` <span class="pl-count">${count}</span>` : ''}
       </button>`;
         li.querySelector('button').addEventListener('click', () => {
             loadPlaylist(idx);

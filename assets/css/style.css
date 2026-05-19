@@ -289,6 +289,8 @@ body.electron #app {
 .playlist-nav li.active .all-pl-dot { box-shadow: 0 0 6px rgba(167,139,250,.5) !important; }
 .pl-dot.fav-pl-dot { background: #e25555 !important; }
 .playlist-nav li.active .fav-pl-dot { box-shadow: 0 0 6px rgba(226,85,85,.5) !important; }
+.pl-count { font-size: .85em; color: var(--txt-dim); font-weight: 400; margin-left: auto; }
+.playlist-nav li.active .pl-count { color: var(--accent); font-weight: 500; }
 
 /* Mode Toggle */
 .mode-toggle {
