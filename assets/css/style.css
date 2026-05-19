@@ -72,6 +72,7 @@ body.electron #win-controls { display: flex; }
 /* Shift app grid down so it sits below the title bar */
 body.electron #app {
     margin-top: 32px;
+    background: red;
     height: calc(100vh - 32px);
 }
 
