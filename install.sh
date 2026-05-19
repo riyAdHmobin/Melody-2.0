@@ -136,6 +136,13 @@ chmod 700 "$CONFIG_DIR"
 chmod 600 "$CONFIG_DIR/.env"
 info "Config saved to $CONFIG_DIR/.env"
 
+# ── 10. Cron job for channel auto-sync ──────────────────────────────────────
+step "Setting up channel auto-sync cron (every 5 minutes)"
+SYNC_LOG="$CONFIG_DIR/sync.log"
+CRON_CMD="0 */12 * * * php $INSTALL_DIR/cron/sync.php >> $SYNC_LOG 2>&1"
+( crontab -l 2>/dev/null | grep -v 'melody/cron/sync.php'; echo "$CRON_CMD" ) | crontab -
+info "Cron job added — sync log: $SYNC_LOG"
+
 # ── Done ────────────────────────────────────────────────────────────────────
 echo ""
 echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"

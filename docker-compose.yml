@@ -20,6 +20,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  cron:
+    build: .
+    command: bash -c "while true; do php /var/www/html/cron/sync.php 2>&1; sleep 43200; done"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-melody}
+      DB_USER: ${DB_USER:-melody}
+      DB_PASS: ${DB_PASS:-melody}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   db:
     image: mysql:8.0
     environment:

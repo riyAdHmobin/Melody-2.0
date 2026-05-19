@@ -52,5 +52,27 @@ function melody_db(): PDO {
         $pdo->exec("ALTER TABLE melody_videos ADD COLUMN position INT UNSIGNED NOT NULL DEFAULT 0");
     }
 
+    // Add channel_id to melody_playlists if not yet present
+    $has_channel = $pdo->query("
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = 'melody_playlists'
+          AND COLUMN_NAME  = 'channel_id'
+    ")->fetchColumn();
+    if (!$has_channel) {
+        $pdo->exec("ALTER TABLE melody_playlists ADD COLUMN channel_id VARCHAR(64) NULL DEFAULT NULL");
+    }
+
+    // Add last_seen_video_id to melody_playlists if not yet present
+    $has_last_seen = $pdo->query("
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = 'melody_playlists'
+          AND COLUMN_NAME  = 'last_seen_video_id'
+    ")->fetchColumn();
+    if (!$has_last_seen) {
+        $pdo->exec("ALTER TABLE melody_playlists ADD COLUMN last_seen_video_id VARCHAR(100) NULL DEFAULT NULL");
+    }
+
     return $pdo;
 }

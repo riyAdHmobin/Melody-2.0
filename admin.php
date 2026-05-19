@@ -98,7 +98,8 @@ $msg = '';
 $err = '';
 
 if (isset($_POST['melody_create_playlist'])) {
-    $name = trim($_POST['playlist_name'] ?? '');
+    $name       = trim($_POST['playlist_name'] ?? '');
+    $channel_id = trim($_POST['channel_id'] ?? '') ?: null;
     if ($name !== '') {
         $slug = melody_slugify($name);
         $exists = $db->prepare("SELECT id FROM melody_playlists WHERE slug = ?");
@@ -106,9 +107,37 @@ if (isset($_POST['melody_create_playlist'])) {
         if ($exists->fetch()) {
             $err = 'A playlist with that name already exists.';
         } else {
-            $db->prepare("INSERT INTO melody_playlists (name,slug) VALUES (?,?)")
-               ->execute([$name, $slug]);
+            $db->prepare("INSERT INTO melody_playlists (name,slug,channel_id) VALUES (?,?,?)")
+               ->execute([$name, $slug, $channel_id]);
             $msg = "Playlist &ldquo;{$name}&rdquo; created.";
+        }
+    }
+}
+
+if (isset($_POST['melody_update_channel'])) {
+    $pl_id      = (int)($_POST['playlist_id'] ?? 0);
+    $channel_id = trim($_POST['channel_id'] ?? '') ?: null;
+    $db->prepare("UPDATE melody_playlists SET channel_id = ? WHERE id = ?")
+       ->execute([$channel_id, $pl_id]);
+    $msg = $channel_id ? 'Channel ID saved.' : 'Channel ID cleared.';
+}
+
+if (isset($_POST['melody_sync_now'])) {
+    $pl_id   = (int)($_POST['playlist_id'] ?? 0);
+    $pl_stmt = $db->prepare("SELECT * FROM melody_playlists WHERE id = ?");
+    $pl_stmt->execute([$pl_id]);
+    $sync_pl = $pl_stmt->fetch();
+    if ($sync_pl && !empty($sync_pl->channel_id)) {
+        $result = melody_sync_playlist_channel($db, $sync_pl);
+        switch ($result['status']) {
+            case 'added':
+                $msg = 'Synced: added &ldquo;' . htmlspecialchars($result['title']) . '&rdquo;';
+                break;
+            case 'up_to_date':
+                $msg = 'Already up to date.';
+                break;
+            default:
+                $err = 'Sync failed: ' . htmlspecialchars($result['reason'] ?? 'unknown error');
         }
     }
 }
@@ -196,6 +225,9 @@ code{background:#18181f;padding:2px 7px;border-radius:4px;font-size:.8rem;color:
 .video-actions{display:flex;gap:10px;align-items:center;flex-shrink:0}
 
 .empty{padding:14px 18px;color:#808090;font-size:.9rem}
+.channel-row{padding:10px 18px;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.channel-row input[type=text]{min-width:260px;flex:1}
+.last-seen{font-size:.78rem;color:#808090;margin-top:6px;width:100%}
 @media(max-width:600px){.row{flex-direction:column}.btn{width:100%}}
 </style>
 </head>
@@ -220,6 +252,9 @@ code{background:#18181f;padding:2px 7px;border-radius:4px;font-size:.8rem;color:
         <div class="row">
             <input type="text" name="playlist_name" placeholder="Playlist name" required/>
             <button class="btn btn-primary" type="submit" name="melody_create_playlist">Create</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+            <input type="text" name="channel_id" placeholder="YouTube Channel ID — optional (e.g. UCxxxxxx)"/>
         </div>
     </form>
 </div>
@@ -263,6 +298,21 @@ code{background:#18181f;padding:2px 7px;border-radius:4px;font-size:.8rem;color:
                        class="btn btn-danger"
                        onclick="return confirm('Delete playlist and all its videos?')">Delete</a>
                 </div>
+            </div>
+            <div class="channel-row">
+                <form method="POST" style="display:contents">
+                    <input type="hidden" name="playlist_id" value="<?= $pl->id ?>"/>
+                    <input type="text" name="channel_id"
+                           value="<?= htmlspecialchars($pl->channel_id ?? '') ?>"
+                           placeholder="YouTube Channel ID (e.g. UCxxxxxx)"/>
+                    <button class="btn btn-primary" type="submit" name="melody_update_channel">Save</button>
+                    <?php if (!empty($pl->channel_id)): ?>
+                    <button class="btn btn-primary" type="submit" name="melody_sync_now">Sync Now</button>
+                    <?php endif; ?>
+                </form>
+                <?php if (!empty($pl->last_seen_video_id)): ?>
+                <div class="last-seen">Last import: <code><?= htmlspecialchars($pl->last_seen_video_id) ?></code></div>
+                <?php endif; ?>
             </div>
             <?php
             $vstmt = $db->prepare("SELECT * FROM melody_videos WHERE playlist_id=? ORDER BY id ASC");

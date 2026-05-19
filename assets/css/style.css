@@ -306,6 +306,19 @@ body.electron #app {
     color: #000;
 }
 
+#btn-sync-channels:hover {
+    background: var(--accent);
+    color: #000;
+}
+#btn-sync-channels:hover svg {
+    stroke: #000;
+}
+#btn-sync-channels:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .mode-btn {
     flex: 1;
     background: none;

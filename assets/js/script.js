@@ -94,6 +94,7 @@ const dom = {
     winMinimize:         $('win-minimize'),
     winMaximize:         $('win-maximize'),
     winClose:            $('win-close'),
+    syncChannels:        $('btn-sync-channels'),
 };
 
 /* ─────────────────────────────────────────────────────
@@ -983,6 +984,34 @@ function bindEvents() {
     /* Mini player toggle */
     dom.miniToggle.addEventListener('click', () => {
         dom.app.classList.toggle('mini-mode');
+    });
+
+    /* Channel sync */
+    dom.syncChannels.addEventListener('click', async () => {
+        if (dom.syncChannels.disabled) return;
+        dom.syncChannels.disabled = true;
+        const origHTML = dom.syncChannels.innerHTML;
+        dom.syncChannels.textContent = 'Syncing…';
+        try {
+            const res  = await fetch('/api/sync.php');
+            const data = await res.json();
+            const added = Object.values(data).filter(r => r.status === 'added').length;
+            if (added > 0) {
+                showToast(`Synced: ${added} new video${added !== 1 ? 's' : ''} added`);
+                await initPlaylists();
+                renderPlaylistNav();
+                if (!state.allActive && !state.favoritesActive) loadPlaylist(state.activePl);
+            } else if (!Object.keys(data).length) {
+                showToast('No channels configured');
+            } else {
+                showToast('Already up to date');
+            }
+        } catch {
+            showToast('Sync failed');
+        } finally {
+            dom.syncChannels.innerHTML = origHTML;
+            dom.syncChannels.disabled = false;
+        }
     });
 
     /* Add Playlist modal */
