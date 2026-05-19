@@ -64,13 +64,7 @@ if ! command -v electron &>/dev/null; then
 fi
 info "Electron $(electron --version)"
 
-# ── 4. yt-dlp + ffmpeg ──────────────────────────────────────────────────────
-step "Installing yt-dlp and ffmpeg"
-sudo apt-get install -y ffmpeg python3 python3-pip
-sudo pip3 install --break-system-packages yt-dlp 2>/dev/null || sudo pip3 install yt-dlp
-info "yt-dlp $(yt-dlp --version 2>/dev/null || echo 'installed')"
-
-# ── 5. Copy app files ───────────────────────────────────────────────────────
+# ── 4. Copy app files ───────────────────────────────────────────────────────
 step "Installing Melody to $INSTALL_DIR"
 sudo mkdir -p "$INSTALL_DIR"
 sudo rsync -a --delete \
@@ -82,7 +76,7 @@ sudo rsync -a --delete \
 sudo chown -R root:root "$INSTALL_DIR"
 sudo chmod -R 755 "$INSTALL_DIR"
 
-# ── 6. Launcher script ──────────────────────────────────────────────────────
+# ── 5. Launcher script ──────────────────────────────────────────────────────
 step "Creating launcher"
 sudo tee "$BIN_PATH" > /dev/null <<'EOF'
 #!/usr/bin/env bash
@@ -96,7 +90,7 @@ if [[ -f /usr/local/lib/node_modules/electron/dist/chrome-sandbox ]]; then
     sudo chmod 4755     /usr/local/lib/node_modules/electron/dist/chrome-sandbox
 fi
 
-# ── 7. Desktop entry ────────────────────────────────────────────────────────
+# ── 6. Desktop entry ────────────────────────────────────────────────────────
 mkdir -p "$(dirname "$DESKTOP_FILE")"
 cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
@@ -110,7 +104,7 @@ StartupNotify=true
 EOF
 info "Desktop entry created → search 'Melody' in your app launcher"
 
-# ── 8. Database credentials ─────────────────────────────────────────────────
+# ── 7. Database credentials ─────────────────────────────────────────────────
 step "Database configuration"
 echo "  Enter your remote MySQL connection details."
 echo ""
@@ -120,14 +114,14 @@ read -rp  "  DB Name [melody]:    " DB_NAME;  DB_NAME=${DB_NAME:-melody}
 read -rp  "  DB User [melody]:    " DB_USER;  DB_USER=${DB_USER:-melody}
 read -rsp "  DB Password:         " DB_PASS;  echo
 
-# ── 9. Admin account ────────────────────────────────────────────────────────
+# ── 8. Admin account ────────────────────────────────────────────────────────
 echo ""
 step "Admin account (for /admin.php)"
 read -rp  "  Username [admin]:    " ADMIN_USER; ADMIN_USER=${ADMIN_USER:-admin}
 read -rsp "  Password:            " ADMIN_PASS; echo
 ADMIN_HASH=$(ADMIN_PASS="$ADMIN_PASS" php -r "echo password_hash(getenv('ADMIN_PASS'), PASSWORD_BCRYPT);")
 
-# ── 10. Write config ─────────────────────────────────────────────────────────
+# ── 9. Write config ─────────────────────────────────────────────────────────
 mkdir -p "$CONFIG_DIR"
 chmod 700 "$CONFIG_DIR"
 {
@@ -142,7 +136,7 @@ chmod 700 "$CONFIG_DIR"
 chmod 600 "$CONFIG_DIR/.env"
 info "Config saved to $CONFIG_DIR/.env"
 
-# ── 11. Cron job for channel auto-sync ──────────────────────────────────────
+# ── 10. Cron job for channel auto-sync ──────────────────────────────────────
 step "Setting up channel auto-sync cron (every 5 minutes)"
 SYNC_LOG="$CONFIG_DIR/sync.log"
 CRON_CMD="0 */12 * * * php $INSTALL_DIR/cron/sync.php >> $SYNC_LOG 2>&1"

@@ -17,10 +17,9 @@ try {
         $videos = $stmt->fetchAll();
 
         $demo = array_map(fn($v) => [
-            'id'        => $v->youtube_id,
-            'title'     => $v->title,
-            'url'       => $v->youtube_url,
-            'localPath' => $v->local_audio_path ?: null,
+            'id'    => $v->youtube_id,
+            'title' => $v->title,
+            'url'   => $v->youtube_url,
         ], $videos);
 
         $response[] = [

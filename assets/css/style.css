@@ -828,23 +828,6 @@ li.active .track-name { color: var(--accent); font-weight: 600; }
 .track-fav-btn.faved { color: #e25555; display: block; }
 .track-fav-btn svg { width: 14px; height: 14px; display: block; }
 
-/* Download button */
-.track-dl-btn {
-    background: none; border: none;
-    color: var(--txt-dim);
-    cursor: pointer;
-    padding: 4px;
-    display: none;
-    border-radius: 50%;
-    transition: color .15s;
-    flex-shrink: 0;
-}
-#track-list li:hover .track-dl-btn { display: block; }
-.track-dl-btn.downloaded { color: var(--accent); display: block; }
-.track-dl-btn:disabled { cursor: default; opacity: 0.6; }
-.track-dl-btn svg { width: 14px; height: 14px; display: block; }
-.track-dl-btn .dl-spin { animation: spin .7s linear infinite; }
-
 /* Drag handle */
 .track-drag-handle {
     color: var(--txt-muted);

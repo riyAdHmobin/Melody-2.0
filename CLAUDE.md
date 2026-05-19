@@ -30,8 +30,6 @@ bash update.sh    # pull latest and rsync to /opt/melody
 bash uninstall.sh # remove
 ```
 
-Dev mode (no install): `electron electron/` from the project root (requires `~/.config/melody/.env` with DB creds).
-
 The installer writes DB credentials and the admin password hash to `~/.config/melody/.env` (mode 600). Electron reads this file at startup and injects the vars into the PHP process environment. If `DB_HOST` is missing from that file, Electron shows an error and quits.
 
 ### Local PHP + existing MySQL
@@ -40,10 +38,6 @@ The installer writes DB credentials and the admin password hash to `~/.config/me
 # Edit config.php (or set env vars) with your DB credentials
 php -S localhost:8080
 ```
-
-### No tests or linting
-
-There is no test suite and no linter configured. Validate changes manually via Docker or the local PHP server.
 
 ## Architecture
 
@@ -57,11 +51,10 @@ config.php         — DB credentials + admin hash (reads env vars, falls back t
 includes/
   db.php           — PDO singleton; runs CREATE TABLE IF NOT EXISTS on every first connection
   auth.php         — Session-based login (melody_session_start, melody_login, melody_logout)
-  youtube.php      — melody_extract_youtube_id(), melody_get_youtube_title() via oEmbed,
-                     melody_slugify(), melody_is_youtube_short() (HEAD request to /shorts/{id},
-                     200 = Short); melody_fetch_latest_channel_video() (RSS feed, skips Shorts);
-                     melody_sync_playlist_channel() (insert new video, update last_seen_video_id,
-                     silent error logging)
+  youtube.php      — melody_extract_youtube_id(), melody_get_youtube_title() via oEmbed, melody_slugify();
+                     melody_is_youtube_short() (HEAD request to /shorts/{id}, 200 = Short);
+                     melody_fetch_latest_channel_video() (RSS feed, skips Shorts);
+                     melody_sync_playlist_channel() (insert new video, update last_seen_video_id, silent error logging)
   .htaccess        — Blocks direct HTTP access to PHP include files
 
 api/
@@ -73,23 +66,26 @@ api/
 
 assets/
   css/style.css    — Dark glassmorphism theme
-  js/sources.js    — getPlaylistSources(): fetches /api/playlists.php; DEFAULT_PLAYLIST_SOURCES is an
-                     empty array (all playlists come from the DB)
+  js/sources.js    — getPlaylistSources(): fetches /api/playlists.php, merges with DEFAULT_PLAYLIST_SOURCES
   js/script.js     — All player logic (~1230 lines)
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
-  main.js          — Electron entry: spawns `php -S` on a free port (PHP_CLI_SERVER_WORKERS=4),
-                     reads config from ~/.config/melody/.env; frameless window (frame:false) with
-                     ipcMain handlers for win-minimize/maximize/close
-  preload.js       — contextBridge script; exposes window.electronAPI.{minimize,maximize,close}
+  main.js          — Electron entry: spawns `php -S` on a free port, reads config from ~/.config/melody/.env; frameless window (frame:false) with ipcMain handlers for win-minimize/maximize/close
+  preload.js       — contextBridge script; exposes window.electronAPI.{minimize,maximize,close} to the renderer
   package.json     — Electron app manifest (no npm deps; uses globally installed electron)
 
+Dockerfile         — php:8.2-apache + pdo_mysql
+docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated)
+
+api/
+  sync.php         — GET ?id=N → sync one playlist; no param → sync all with channel_id set
+
 cron/
-  sync.php         — PHP CLI script for background sync (system cron or Docker bash loop, 43200 s = 12 h)
+  sync.php         — PHP CLI script for background sync (system cron or Docker bash loop)
 
 Dockerfile         — php:8.2-apache + pdo_mysql + simplexml
-docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated) + cron (bash loop)
+docker-compose.yml — app (port 8080) + db (MySQL 8) + cron (bash loop, 43200 s = 12 h)
 
 install.sh         — Ubuntu/Debian installer: installs php-cli php-mysql php-mbstring php-curl php-xml,
                      Node 20, electron globally; copies to /opt/melody; prompts DB + admin creds;
@@ -98,22 +94,11 @@ update.sh          — Pulls latest changes (git pull or clone) then rsyncs to /
 uninstall.sh       — Removes /opt/melody, /usr/local/bin/melody, .desktop entry, optionally ~/.config/melody/
 ```
 
-### Admin panel (admin.php) mutations
-
-All mutations are POST-only, guarded by `melody_is_logged_in()`:
-
-- `melody_create_playlist` — create playlist with optional `channel_id`
-- `melody_update_channel` — set or clear `channel_id` on a playlist
-- `melody_sync_now` — trigger channel sync for one playlist
-- `melody_delete_playlist` — delete playlist and cascade-delete its videos
-- `melody_add_track` — add a track by YouTube URL (title fetched via oEmbed)
-- `melody_delete_track` — delete a single track
-
 ### API response format
 
 `GET /api/playlists.php`:
 ```json
-[{ "name": "Playlist Name", "slug": "playlist-name", "api": "/api/playlist.php?slug=playlist-name", "demo": [{ "id": "ytId", "title": "...", "url": "..." }] }]
+[{ "name": "Playlist Name", "api": "/api/playlist.php?slug=playlist-name", "demo": [{ "id": "ytId", "title": "...", "url": "..." }] }]
 ```
 
 `GET /api/playlist.php?slug=playlist-name`:
@@ -140,7 +125,7 @@ melody_videos     (id, playlist_id FK, youtube_id, title, youtube_url, position,
 melody_favorites  (id, youtube_id UNIQUE, created_at)
 ```
 
-`position`, `channel_id`, and `last_seen_video_id` are all added via in-place ALTER TABLE migrations in `db.php` (checks `information_schema.COLUMNS` on first connect). **New columns must always be added this way — never in `CREATE TABLE`.**
+`position`, `channel_id`, and `last_seen_video_id` are all added via in-place ALTER TABLE migrations in `db.php` (checks `information_schema.COLUMNS` on first connect). New columns are always added this way — never in `CREATE TABLE`.
 
 ### Channel auto-import
 
@@ -150,7 +135,7 @@ Sync logic (`melody_sync_playlist_channel` in `includes/youtube.php`):
 1. Fetch `https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}` (requires `php-xml`)
 2. Iterate entries; for each, HEAD-request `youtube.com/shorts/{id}` — HTTP 200 = Short (skip), redirect = regular video
 3. Compare video ID against `last_seen_video_id`; if different, insert into `melody_videos` and update `last_seen_video_id`
-4. All errors are logged via `error_log()` and return `['status' => 'error']` — nothing crashes
+4. All errors (network failure, missing extension, invalid channel) are logged via `error_log()` and return `['status' => 'error']` — nothing crashes
 
 Sync status values: `added` | `up_to_date` | `skipped` (no channel_id) | `error`.
 
@@ -159,7 +144,7 @@ Sync status values: `added` | `up_to_date` | `skipped` (no channel_id) | `error`
 Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` → `applySavedState()` → `renderPlaylistNav()` → `bindEvents()` → `initParticles()` / `initVisualizer()` → `loadPlaylist()`.
 
 - Central `state` object — playlists, tracks, player instance, playback settings, favorites
-- `dom` object — all ~50 DOM element references, looked up once at parse time via `const $ = id => document.getElementById(id)`
+- `dom` object — all ~50 DOM element references, looked up once at parse time
 - YouTube playback via IFrame API; `onYouTubeIframeAPIReady` is a required global callback
 - `saveStorage()` / `loadStorage()` persist to `localStorage` under key `melody_v2`
 - Two canvas animations run always: 60-bar simulated visualizer and ambient particles
@@ -188,6 +173,10 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 | `L` | Cycle loop mode |
 | `S` | Toggle shuffle |
 | `Ctrl+F` | Focus search |
+
+### sources.js — custom playlist sources
+
+`DEFAULT_PLAYLIST_SOURCES` in `sources.js` is a hardcoded fallback array of playlist descriptors (same shape as the API response). `getPlaylistSources()` fetches `/api/playlists.php` and merges DB playlists before the defaults, deduplicating by name.
 
 ## Environment variables
 

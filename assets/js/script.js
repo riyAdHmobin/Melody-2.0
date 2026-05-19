@@ -24,7 +24,6 @@ const state = {
     seekDragging:     false,
     progressInterval: null,
     ctxTrackIdx:      -1,
-    usingLocal:       false,
 };
 
 let dragSrcIdx = -1;
@@ -96,7 +95,6 @@ const dom = {
     winMaximize:         $('win-maximize'),
     winClose:            $('win-close'),
     syncChannels:        $('btn-sync-channels'),
-    localAudio:          $('local-audio'),
 };
 
 /* ─────────────────────────────────────────────────────
@@ -240,30 +238,14 @@ function loadTrack(idx, autoplay = false) {
 
     renderTrackListActive();
 
-    if (track.localPath) {
-        state.usingLocal = true;
-        // Pause YouTube if it was active
-        if (state.ytReady && state.ytPlayer) { try { state.ytPlayer.pauseVideo(); } catch(e) {} }
-        dom.localAudio.src = '/downloads/' + track.localPath;
-        dom.localAudio.playbackRate = state.speed;
+    if (state.ytReady && state.ytPlayer) {
         if (autoplay) {
-            dom.localAudio.play().catch(() => {});
+            state.ytPlayer.loadVideoById(track.id);
         } else {
+            state.ytPlayer.cueVideoById(track.id);
             dom.artSpinner.classList.remove('loading');
         }
-    } else {
-        state.usingLocal = false;
-        dom.localAudio.pause();
-        dom.localAudio.src = '';
-        if (state.ytReady && state.ytPlayer) {
-            if (autoplay) {
-                state.ytPlayer.loadVideoById(track.id);
-            } else {
-                state.ytPlayer.cueVideoById(track.id);
-                dom.artSpinner.classList.remove('loading');
-            }
-            state.ytPlayer.setPlaybackRate(state.speed);
-        }
+        state.ytPlayer.setPlaybackRate(state.speed);
     }
 
     dom.progressFill.style.width     = '0%';
@@ -279,16 +261,8 @@ function togglePlay() {
     if (!state.tracks.length) return;
     if (state.currentIdx < 0) { loadTrack(0, true); return; }
 
-    if (state.usingLocal) {
-        if (state.isPlaying) {
-            dom.localAudio.pause();
-        } else {
-            dom.localAudio.play().catch(() => {});
-        }
-        return;
-    }
-
     if (!state.ytReady || !state.ytPlayer) return;
+
     if (state.isPlaying) {
         state.ytPlayer.pauseVideo();
     } else {
@@ -322,12 +296,9 @@ function playNext() {
 function playPrev() {
     if (!state.tracks.length) return;
     // If > 3 seconds in, restart track
-    const currentTime = state.usingLocal
-        ? (dom.localAudio.currentTime || 0)
-        : (state.ytReady && state.ytPlayer ? state.ytPlayer.getCurrentTime() : 0);
+    const currentTime = state.ytReady && state.ytPlayer ? state.ytPlayer.getCurrentTime() : 0;
     if (currentTime > 3) {
-        if (state.usingLocal) dom.localAudio.currentTime = 0;
-        else state.ytPlayer.seekTo(0);
+        state.ytPlayer.seekTo(0);
         return;
     }
     let prev = state.isShuffle ? randomIndex() : state.currentIdx - 1;
@@ -396,7 +367,6 @@ function setVolume(v) {
     state.volume = v;
     dom.volumeSlider.value = v;
     if (state.ytReady && state.ytPlayer) state.ytPlayer.setVolume(v);
-    dom.localAudio.volume = v / 100;
     updateVolIcon(v);
     saveStorage();
 }
@@ -435,11 +405,10 @@ function stopProgressTracking() {
 }
 
 function updateProgress() {
-    if (state.seekDragging) return;
-    if (!state.usingLocal && (!state.ytReady || !state.ytPlayer)) return;
+    if (!state.ytReady || !state.ytPlayer || state.seekDragging) return;
     try {
-        const current  = state.usingLocal ? (dom.localAudio.currentTime || 0) : (state.ytPlayer.getCurrentTime() || 0);
-        const duration = state.usingLocal ? (dom.localAudio.duration    || 0) : (state.ytPlayer.getDuration()    || 0);
+        const current  = state.ytPlayer.getCurrentTime() || 0;
+        const duration = state.ytPlayer.getDuration()    || 0;
         if (duration > 0) {
             const pct = (current / duration) * 100;
             dom.progressFill.style.width = pct + '%';
@@ -452,14 +421,11 @@ function updateProgress() {
 }
 
 function seekTo(e) {
-    if (!state.usingLocal && (!state.ytReady || !state.ytPlayer)) return;
+    if (!state.ytReady || !state.ytPlayer) return;
     const rect = dom.progressWrap.getBoundingClientRect();
     const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    if (state.usingLocal) {
-        dom.localAudio.currentTime = pct * (dom.localAudio.duration || 0);
-    } else {
-        state.ytPlayer.seekTo(pct * (state.ytPlayer.getDuration() || 0), true);
-    }
+    const dur  = state.ytPlayer.getDuration() || 0;
+    state.ytPlayer.seekTo(pct * dur, true);
     dom.progressFill.style.width = (pct * 100) + '%';
 }
 
@@ -495,10 +461,9 @@ async function loadPlaylist(idx) {
             const data = await res.json();
             if (Array.isArray(data)) {
                 tracks = data.map(item => ({
-                    id:        item.id    || extractYTId(item.url),
-                    title:     item.title || item.name || 'Unknown',
-                    url:       item.url  || `https://www.youtube.com/watch?v=${item.id}`,
-                    localPath: item.localPath || null,
+                    id:    item.id    || extractYTId(item.url),
+                    title: item.title || item.name || 'Unknown',
+                    url:   item.url  || `https://www.youtube.com/watch?v=${item.id}`,
                 }));
             }
         } catch (err) {
@@ -552,10 +517,7 @@ function renderTrackList() {
         li.className = isActive ? 'active' : '';
         li.style.animationDelay = `${visIdx * 30}ms`;
 
-        const canDrag  = !state.searchQuery;
-        const dlIcon   = track.localPath
-            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`
-            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+        const canDrag = !state.searchQuery;
 
         li.innerHTML = `
       ${canDrag ? `<span class="track-drag-handle" draggable="true" aria-hidden="true">
@@ -578,15 +540,11 @@ function renderTrackList() {
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </svg>
       </button>
-      <button class="track-dl-btn ${track.localPath ? 'downloaded' : ''}" data-id="${track.id}" title="${track.localPath ? 'Downloaded' : 'Download audio'}" aria-label="${track.localPath ? 'Downloaded' : 'Download audio'}">
-        ${dlIcon}
-      </button>
     `;
 
         li.addEventListener('click', e => {
             if (e.target.closest('.track-fav-btn')) return;
             if (e.target.closest('.track-drag-handle')) return;
-            if (e.target.closest('.track-dl-btn')) return;
             playTrack(realIdx);
         });
 
@@ -632,11 +590,6 @@ function renderTrackList() {
             toggleFavorite(track.id, li.querySelector('.track-fav-btn'));
         });
 
-        li.querySelector('.track-dl-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!track.localPath) downloadTrack(track, e.currentTarget);
-        });
-
         dom.trackList.appendChild(li);
     });
 }
@@ -665,38 +618,6 @@ function escHtml(s) {
 
 function truncTitle(s, n = 16) {
     return s.length > n ? s.slice(0, n) + '…' : s;
-}
-
-async function downloadTrack(track, btn) {
-    btn.disabled = true;
-    btn.innerHTML = `<svg class="dl-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="31 63"/></svg>`;
-    try {
-        const res  = await fetch('/api/download.php', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ youtube_id: track.id }),
-        });
-        const data = await res.json();
-        if (data.status === 'success' || data.status === 'exists') {
-            track.localPath = track.id + '.mp3';
-            btn.className   = 'track-dl-btn downloaded';
-            btn.title       = 'Downloaded';
-            btn.disabled    = false;
-            btn.innerHTML   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
-            showToast(`"${truncTitle(track.title, 24)}" downloaded`);
-        } else {
-            showToast(data.message || 'Download failed');
-            resetDlBtn(btn);
-        }
-    } catch {
-        showToast('Download failed');
-        resetDlBtn(btn);
-    }
-}
-
-function resetDlBtn(btn) {
-    btn.disabled  = false;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
 }
 
 /* ─────────────────────────────────────────────────────
@@ -1041,31 +962,7 @@ function bindEvents() {
     dom.speedSelect.addEventListener('change', e => {
         state.speed = parseFloat(e.target.value);
         if (state.ytReady && state.ytPlayer) state.ytPlayer.setPlaybackRate(state.speed);
-        dom.localAudio.playbackRate = state.speed;
         saveStorage();
-    });
-
-    /* Local audio events */
-    dom.localAudio.addEventListener('play', () => {
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        dom.artSpinner.classList.remove('loading');
-        dom.albumArtWrap.classList.add('playing');
-        dom.equalizer.classList.remove('hidden');
-        startProgressTracking();
-    });
-    dom.localAudio.addEventListener('pause', () => {
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        dom.albumArtWrap.classList.remove('playing');
-        dom.equalizer.classList.add('hidden');
-        stopProgressTracking();
-    });
-    dom.localAudio.addEventListener('ended', handleTrackEnd);
-    dom.localAudio.addEventListener('waiting', () => dom.artSpinner.classList.add('loading'));
-    dom.localAudio.addEventListener('canplay', () => dom.artSpinner.classList.remove('loading'));
-    dom.localAudio.addEventListener('loadedmetadata', () => {
-        dom.timeTotal.textContent = formatTime(dom.localAudio.duration);
     });
 
     /* Favorite (main) */
@@ -1163,12 +1060,10 @@ function handleKeyboard(e) {
         case 'Space':     e.preventDefault(); togglePlay();                 break;
         case 'ArrowRight':
             if (e.shiftKey) playNext();
-            else if (state.usingLocal) dom.localAudio.currentTime = Math.min(dom.localAudio.duration||0, (dom.localAudio.currentTime||0)+5);
             else if (state.ytReady && state.ytPlayer) state.ytPlayer.seekTo((state.ytPlayer.getCurrentTime()||0)+5, true);
             break;
         case 'ArrowLeft':
             if (e.shiftKey) playPrev();
-            else if (state.usingLocal) dom.localAudio.currentTime = Math.max(0, (dom.localAudio.currentTime||0)-5);
             else if (state.ytReady && state.ytPlayer) state.ytPlayer.seekTo(Math.max(0,(state.ytPlayer.getCurrentTime()||0)-5), true);
             break;
         case 'ArrowUp':   e.preventDefault(); setVolume(state.volume + 5);  break;
