@@ -112,6 +112,19 @@ body {
     color: var(--txt);
     line-height: 1;
 }
+/*.logo-tagline {*/
+/*    display: block;*/
+/*    font-size: .76rem;*/
+/*    color: var(--accent);*/
+/*    letter-spacing: .07em;*/
+/*    text-transform: uppercase;*/
+/*    font-weight: 500;*/
+/*    white-space: nowrap;*/
+/*    overflow: hidden;*/
+/*    text-overflow: ellipsis;*/
+/*    max-width: 100%;*/
+/*}*/
+
 .logo-tagline {
     display: block;
     font-size: .76rem;
@@ -119,9 +132,10 @@ body {
     letter-spacing: .07em;
     text-transform: uppercase;
     font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+    white-space: normal;
+    overflow-wrap: break-word;
+
     max-width: 100%;
 }
 
