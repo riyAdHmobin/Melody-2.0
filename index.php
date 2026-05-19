@@ -18,6 +18,19 @@
 <!-- ─── App Shell ─── -->
 <div id="app">
 
+    <!-- Custom window controls (Electron frameless mode only) -->
+    <div id="win-controls" aria-label="Window controls">
+        <button id="win-minimize" title="Minimize">
+            <svg viewBox="0 0 12 12" fill="none"><line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button id="win-maximize" title="Maximize / Restore">
+            <svg viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <button id="win-close" title="Close">
+            <svg viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+    </div>
+
     <!-- ═══════════════════════════════════════
          LEFT SIDEBAR
     ════════════════════════════════════════ -->

@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const net  = require('net');
@@ -90,11 +90,17 @@ async function createWindow() {
         minWidth: 900,
         minHeight: 600,
         title: 'Melody',
+        frame: false,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js'),
         },
     });
+
+    ipcMain.on('win-minimize', () => win.minimize());
+    ipcMain.on('win-maximize', () => win.isMaximized() ? win.unmaximize() : win.maximize());
+    ipcMain.on('win-close',    () => win.close());
 
     win.setMenuBarVisibility(false);
     win.loadURL(`http://127.0.0.1:${port}`);

@@ -90,6 +90,9 @@ const dom = {
     ctxMenu:             $('ctx-menu'),
     ctxPlayNext:         $('ctx-play-next'),
     toast:               $('toast'),
+    winMinimize:         $('win-minimize'),
+    winMaximize:         $('win-maximize'),
+    winClose:            $('win-close'),
 };
 
 /* ─────────────────────────────────────────────────────
@@ -836,6 +839,14 @@ function initVisualizer() {
    18.  EVENT LISTENERS
 ───────────────────────────────────────────────────── */
 function bindEvents() {
+
+    /* Electron frameless window controls */
+    if (window.electronAPI) {
+        document.body.classList.add('electron');
+        dom.winMinimize.addEventListener('click', () => window.electronAPI.minimize());
+        dom.winMaximize.addEventListener('click', () => window.electronAPI.maximize());
+        dom.winClose.addEventListener('click',    () => window.electronAPI.close());
+    }
 
     /* Play / Pause */
     dom.btnPlay.addEventListener('click', togglePlay);
