@@ -67,7 +67,8 @@ assets/
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
-  main.js          — Electron entry: spawns `php -S` on a free port, reads config from ~/.config/melody/.env
+  main.js          — Electron entry: spawns `php -S` on a free port, reads config from ~/.config/melody/.env; frameless window (frame:false) with ipcMain handlers for win-minimize/maximize/close
+  preload.js       — contextBridge script; exposes window.electronAPI.{minimize,maximize,close} to the renderer
   package.json     — Electron app manifest (no npm deps; uses globally installed electron)
 
 Dockerfile         — php:8.2-apache + pdo_mysql
@@ -125,6 +126,7 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 - Mini player mode: toggled via `dom.miniToggle`; adds `mini-mode` class to `#app`
 - Right-click on a track shows a context menu (`#ctx-menu`) with "Play Next" option
 - `playbackMode` (`'audio'` | `'video'`) controls whether the YouTube iframe or the album art container is visible
+- **Electron frameless window**: `bindEvents()` checks `window.electronAPI`; if present it adds `body.electron` class (activates custom title bar CSS) and wires `#win-minimize/maximize/close` buttons via IPC. The `#win-controls` bar spans full width with `-webkit-app-region: drag`; buttons override with `no-drag`. The app grid shifts down 32 px via `body.electron #app { margin-top: 32px }`. In browser/Docker mode the buttons are hidden and `window.electronAPI` is undefined.
 
 **localStorage persists**: volume, loop mode, shuffle, autoplay, speed, playback mode, favorites, custom playlists, active playlist index.
 
