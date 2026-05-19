@@ -108,7 +108,7 @@ body.electron #main-content {
 }
 body.electron #player-bar {
     background:
-        linear-gradient(180deg, rgba(255,255,255,.045) 0%, transparent 100%),
+        linear-gradient(180deg, rgba(255,255,255,.045) 0%, transparent 10%),
         rgba(8,8,14,.95);
 }
 
