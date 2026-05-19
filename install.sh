@@ -78,9 +78,10 @@ sudo chmod -R 755 "$INSTALL_DIR"
 
 # ── 5. Launcher script ──────────────────────────────────────────────────────
 step "Creating launcher"
-sudo tee "$BIN_PATH" > /dev/null <<'EOF'
+ELECTRON_BIN=$(command -v electron)
+sudo tee "$BIN_PATH" > /dev/null <<EOF
 #!/usr/bin/env bash
-exec electron --no-sandbox /opt/melody/electron/ "$@"
+exec "$ELECTRON_BIN" --no-sandbox /opt/melody/electron/ "\$@"
 EOF
 sudo chmod +x "$BIN_PATH"
 
