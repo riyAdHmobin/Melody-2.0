@@ -71,26 +71,23 @@ assets/
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
-  main.js          — Electron entry: spawns `php -S` on a free port, reads config from ~/.config/melody/.env; frameless window (frame:false) with ipcMain handlers for win-minimize/maximize/close
+  main.js          — Electron entry: spawns `php -S 127.0.0.1:{free-port}` with PHP_CLI_SERVER_WORKERS=4,
+                     reads config from ~/.config/melody/.env; frameless window (frame:false) with
+                     ipcMain handlers for win-minimize/maximize/close; external links open in system browser
   preload.js       — contextBridge script; exposes window.electronAPI.{minimize,maximize,close} to the renderer
   package.json     — Electron app manifest (no npm deps; uses globally installed electron)
-
-Dockerfile         — php:8.2-apache + pdo_mysql
-docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated)
-
-api/
-  sync.php         — GET ?id=N → sync one playlist; no param → sync all with channel_id set
 
 cron/
   sync.php         — PHP CLI script for background sync (system cron or Docker bash loop)
 
 Dockerfile         — php:8.2-apache + pdo_mysql + simplexml
-docker-compose.yml — app (port 8080) + db (MySQL 8) + cron (bash loop, 43200 s = 12 h)
+docker-compose.yml — app (port 8080) + db (MySQL 8) + cron service (bash loop, 43200 s = 12 h)
 
 install.sh         — Ubuntu/Debian installer: installs php-cli php-mysql php-mbstring php-curl php-xml,
-                     Node 20, electron globally; copies to /opt/melody; prompts DB + admin creds;
-                     adds crontab entry (0 */12 * * *) writing to ~/.config/melody/sync.log
-update.sh          — Pulls latest changes (git pull or clone) then rsyncs to /opt/melody/
+                     Node 20 (if <18), electron globally; copies to /opt/melody; prompts DB + admin creds;
+                     adds crontab entry (0 */12 * * *) writing to ~/.config/melody/sync.log;
+                     resolves actual electron binary (not the Node cli.js wrapper) and fixes chrome-sandbox perms
+update.sh          — Pulls latest changes (git pull or clone) then rsyncs to /opt/melody/; ensures php-xml
 uninstall.sh       — Removes /opt/melody, /usr/local/bin/melody, .desktop entry, optionally ~/.config/melody/
 ```
 
@@ -133,8 +130,8 @@ Playlists with a `channel_id` set are synced automatically (twice daily) and man
 
 Sync logic (`melody_sync_playlist_channel` in `includes/youtube.php`):
 1. Fetch `https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}` (requires `php-xml`)
-2. Iterate entries; for each, HEAD-request `youtube.com/shorts/{id}` — HTTP 200 = Short (skip), redirect = regular video
-3. Compare video ID against `last_seen_video_id`; if different, insert into `melody_videos` and update `last_seen_video_id`
+2. Iterate feed entries until the first non-Short: HEAD-request `youtube.com/shorts/{id}` — HTTP 200 = Short (skip), redirect = regular video (use it)
+3. Compare that video's ID against `last_seen_video_id`; if different, insert into `melody_videos` (skips duplicates) and update `last_seen_video_id`
 4. All errors (network failure, missing extension, invalid channel) are logged via `error_log()` and return `['status' => 'error']` — nothing crashes
 
 Sync status values: `added` | `up_to_date` | `skipped` (no channel_id) | `error`.
