@@ -38,7 +38,7 @@ DESKTOP_FILE="$HOME/.local/share/applications/melody.desktop"
 # ── 1. PHP ──────────────────────────────────────────────────────────────────
 step "Installing PHP"
 sudo apt-get update -qq
-sudo apt-get install -y php-cli php-mysql php-mbstring php-curl
+sudo apt-get install -y php-cli php-mysql php-mbstring php-curl php-xml
 info "$(php --version | head -1)"
 
 # ── 2. Node.js ──────────────────────────────────────────────────────────────

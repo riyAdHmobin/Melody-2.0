@@ -34,6 +34,11 @@ function melody_is_youtube_short(string $video_id): bool {
 }
 
 function melody_fetch_latest_channel_video(string $channel_id): array|false {
+    if (!function_exists('simplexml_load_string')) {
+        error_log('Melody sync: php-xml extension missing — run: sudo apt-get install php-xml');
+        return false;
+    }
+
     $feed_url = 'https://www.youtube.com/feeds/videos.xml?channel_id=' . urlencode($channel_id);
     $ctx  = stream_context_create(['http' => ['timeout' => 10]]);
     $body = @file_get_contents($feed_url, false, $ctx);
