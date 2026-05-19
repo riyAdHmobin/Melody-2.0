@@ -84,10 +84,14 @@ exec electron --no-sandbox /opt/melody/electron/ "$@"
 EOF
 sudo chmod +x "$BIN_PATH"
 
-# Fix Electron sandbox permissions
-if [[ -f /usr/local/lib/node_modules/electron/dist/chrome-sandbox ]]; then
-    sudo chown root:root /usr/local/lib/node_modules/electron/dist/chrome-sandbox
-    sudo chmod 4755     /usr/local/lib/node_modules/electron/dist/chrome-sandbox
+# Fix Electron sandbox permissions (handles both system npm and NVM installs)
+SANDBOX=$(electron --version &>/dev/null; \
+    find /usr/local/lib /usr/lib "$HOME/.nvm" -name chrome-sandbox \
+         -path '*/electron/dist/*' 2>/dev/null | head -1)
+if [[ -n "$SANDBOX" ]]; then
+    sudo chown root:root "$SANDBOX"
+    sudo chmod 4755     "$SANDBOX"
+    info "Sandbox fixed: $SANDBOX"
 fi
 
 # ── 6. Desktop entry ────────────────────────────────────────────────────────
