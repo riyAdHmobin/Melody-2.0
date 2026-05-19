@@ -91,6 +91,8 @@ async function createWindow() {
         minHeight: 600,
         title: 'Melody',
         frame: false,
+        transparent: true,
+        backgroundColor: '#00000000',
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,

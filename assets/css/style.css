@@ -75,6 +75,28 @@ body.electron #app {
     height: calc(100vh - 32px);
 }
 
+/* ── Transparent glass window (compositor required on Linux) ── */
+body.electron {
+    background: transparent;
+}
+body.electron #win-controls {
+    background: rgba(8,8,14,.10);
+    border-radius: 14px 14px 0 0;
+}
+body.electron #app {
+    border-radius: 0 0 14px 14px;
+    background: transparent;
+    overflow: hidden;
+}
+/* #main-content has no backdrop-filter elsewhere — add it here */
+body.electron #main-content {
+    background:
+        linear-gradient(155deg, rgba(255,255,255,.04) 0%, transparent 50%),
+        rgba(10,10,18,.50);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+}
+
 #win-controls button {
     background: none;
     border: none;
