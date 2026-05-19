@@ -88,13 +88,28 @@ body.electron #app {
     background: transparent;
     overflow: hidden;
 }
-/* #main-content has no backdrop-filter elsewhere — add it here */
+/* Cap all panels at ~10% see-through in Electron mode */
+body.electron #sidebar {
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.07) 0%, transparent 55%),
+        rgba(10,10,18,.92);
+}
+body.electron #tracklist-panel {
+    background:
+        linear-gradient(155deg, rgba(255,255,255,.05) 0%, transparent 50%),
+        rgba(10,10,18,.92);
+}
 body.electron #main-content {
     background:
         linear-gradient(155deg, rgba(255,255,255,.04) 0%, transparent 50%),
-        rgba(10,10,18,.50);
+        rgba(10,10,18,.90);
     backdrop-filter: blur(24px) saturate(140%);
     -webkit-backdrop-filter: blur(24px) saturate(140%);
+}
+body.electron #player-bar {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.045) 0%, transparent 100%),
+        rgba(8,8,14,.95);
 }
 
 #win-controls button {
