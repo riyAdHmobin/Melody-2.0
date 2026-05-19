@@ -23,6 +23,9 @@ else
     SRC="$TMP_DIR/melody"
 fi
 
+echo "Ensuring php-xml is installed..."
+sudo apt-get install -y php-xml -qq
+
 echo "Syncing files to /opt/melody/..."
 sudo rsync -a --delete \
     --exclude='.git' \
