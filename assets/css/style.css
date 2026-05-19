@@ -80,7 +80,7 @@ body.electron {
     background: transparent;
 }
 body.electron #win-controls {
-    background: rgba(8,8,14,.10);
+    background: rgb(8 8 14 / 0.77);
     border-radius: 14px 14px 0 0;
 }
 body.electron #app {
