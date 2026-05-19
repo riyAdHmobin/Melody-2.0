@@ -527,7 +527,7 @@ function renderTrackList() {
       </div>
       <img class="track-thumb" src="https://img.youtube.com/vi/${track.id}/default.jpg" alt="" loading="lazy" />
       <div class="track-info">
-        <span class="track-name" title="${escHtml(track.title)}">${highlightMatch(escHtml(truncTitle(track.title)), query)}</span>
+        <span class="track-name" title="${escHtml(track.title)}">${highlightMatch(escHtml(track.title), query)}</span>
       </div>
       <button class="track-fav-btn ${isFav ? 'faved' : ''}" data-id="${track.id}" title="${isFav ? 'Unfavorite' : 'Favorite'}" aria-label="Favorite">
         <svg viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
