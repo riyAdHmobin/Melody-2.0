@@ -78,14 +78,14 @@ sudo chmod -R 755 "$INSTALL_DIR"
 
 # ── 5. Launcher script ──────────────────────────────────────────────────────
 step "Creating launcher"
-sudo tee "$BIN_PATH" > /dev/null <<'EOF'
+# Resolve the actual Electron binary (not the Node cli.js wrapper)
+ELECTRON_BIN=$(find "$HOME/.nvm" /usr/local/lib /usr/lib \
+    -path '*/electron/dist/electron' -type f 2>/dev/null | head -1)
+[[ -z "$ELECTRON_BIN" ]] && ELECTRON_BIN=$(command -v electron)
+info "Electron binary: $ELECTRON_BIN"
+sudo tee "$BIN_PATH" > /dev/null <<EOF
 #!/usr/bin/env bash
-# Load NVM if electron is not already on PATH (e.g. desktop launcher, cron)
-if ! command -v electron &>/dev/null; then
-    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-fi
-exec electron --no-sandbox /opt/melody/electron/ "$@"
+exec "$ELECTRON_BIN" --no-sandbox /opt/melody/electron/ "\$@"
 EOF
 sudo chmod +x "$BIN_PATH"
 
