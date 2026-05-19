@@ -63,7 +63,7 @@ api/
 assets/
   css/style.css    — Dark glassmorphism theme
   js/sources.js    — getPlaylistSources(): fetches /api/playlists.php, merges with DEFAULT_PLAYLIST_SOURCES
-  js/script.js     — All player logic (~1150 lines)
+  js/script.js     — All player logic (~1200 lines)
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
@@ -123,6 +123,8 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 - Two canvas animations run always: 60-bar simulated visualizer and ambient particles
 - Custom (user-added) playlists are flagged `{ custom: true }` and round-trip through localStorage only
 - Favorites are stored in both localStorage and `melody_favorites` DB table; on boot, `/api/favorites.php` is fetched and overwrites the localStorage set (localStorage is the fallback when DB is unreachable)
+- **Pseudo-playlists**: "All Songs" (`state.allActive`, `loadAllView()`) aggregates unique tracks across all playlists; "Favorites" (`state.favoritesActive`, `loadFavoritesView()`) does the same for favorited tracks. Both are rendered in `renderPlaylistNav()` above the regular playlist list and use `pl.tracks` (if loaded) or `pl.demo` (always present from API) as their source.
+- Track counts shown far-right on each sidebar entry via `<span class="pl-count">` with `margin-left: auto`. Active count color uses `.playlist-nav li.active .pl-count` — **not** `.pl-count.active` (that selector is wrong; active class is on the parent `li`).
 - Mini player mode: toggled via `dom.miniToggle`; adds `mini-mode` class to `#app`
 - Right-click on a track shows a context menu (`#ctx-menu`) with "Play Next" option
 - `playbackMode` (`'audio'` | `'video'`) controls whether the YouTube iframe or the album art container is visible
