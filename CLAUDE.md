@@ -51,7 +51,10 @@ config.php         — DB credentials + admin hash (reads env vars, falls back t
 includes/
   db.php           — PDO singleton; runs CREATE TABLE IF NOT EXISTS on every first connection
   auth.php         — Session-based login (melody_session_start, melody_login, melody_logout)
-  youtube.php      — melody_extract_youtube_id(), melody_get_youtube_title() via oEmbed, melody_slugify()
+  youtube.php      — melody_extract_youtube_id(), melody_get_youtube_title() via oEmbed, melody_slugify();
+                     melody_is_youtube_short() (HEAD request to /shorts/{id}, 200 = Short);
+                     melody_fetch_latest_channel_video() (RSS feed, skips Shorts);
+                     melody_sync_playlist_channel() (insert new video, update last_seen_video_id, silent error logging)
   .htaccess        — Blocks direct HTTP access to PHP include files
 
 api/
@@ -59,11 +62,12 @@ api/
   playlist.php     — GET ?slug=xxx → track array for one playlist
   favorites.php    — GET → [ytId, ...]; POST {id} → toggle favorite (add/remove), returns {action, id}
   order.php        — POST {playlist_slug, order:[ytId,...]} → reorders tracks by updating position column
+  sync.php         — GET ?id=N → sync one playlist channel; no param → sync all; returns JSON status per playlist
 
 assets/
   css/style.css    — Dark glassmorphism theme
   js/sources.js    — getPlaylistSources(): fetches /api/playlists.php, merges with DEFAULT_PLAYLIST_SOURCES
-  js/script.js     — All player logic (~1200 lines)
+  js/script.js     — All player logic (~1230 lines)
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
@@ -74,7 +78,18 @@ electron/
 Dockerfile         — php:8.2-apache + pdo_mysql
 docker-compose.yml — app (port 8080) + db (MySQL 8, healthcheck-gated)
 
-install.sh         — Ubuntu/Debian installer: installs php-cli, Node 20, electron globally, copies app to /opt/melody, creates launcher + .desktop entry, prompts for DB creds + admin password
+api/
+  sync.php         — GET ?id=N → sync one playlist; no param → sync all with channel_id set
+
+cron/
+  sync.php         — PHP CLI script for background sync (system cron or Docker bash loop)
+
+Dockerfile         — php:8.2-apache + pdo_mysql + simplexml
+docker-compose.yml — app (port 8080) + db (MySQL 8) + cron (bash loop, 43200 s = 12 h)
+
+install.sh         — Ubuntu/Debian installer: installs php-cli php-mysql php-mbstring php-curl php-xml,
+                     Node 20, electron globally; copies to /opt/melody; prompts DB + admin creds;
+                     adds crontab entry (0 */12 * * *) writing to ~/.config/melody/sync.log
 update.sh          — Pulls latest changes (git pull or clone) then rsyncs to /opt/melody/
 uninstall.sh       — Removes /opt/melody, /usr/local/bin/melody, .desktop entry, optionally ~/.config/melody/
 ```
@@ -105,12 +120,24 @@ uninstall.sh       — Removes /opt/melody, /usr/local/bin/melody, .desktop entr
 
 ### Database schema
 ```sql
-melody_playlists  (id, name, slug UNIQUE, created_at)
+melody_playlists  (id, name, slug UNIQUE, channel_id, last_seen_video_id, created_at)
 melody_videos     (id, playlist_id FK, youtube_id, title, youtube_url, position, created_at)
 melody_favorites  (id, youtube_id UNIQUE, created_at)
 ```
 
-`position` is added via an in-place migration in `db.php` (checks `information_schema.COLUMNS` on first connect and runs `ALTER TABLE` if missing).
+`position`, `channel_id`, and `last_seen_video_id` are all added via in-place ALTER TABLE migrations in `db.php` (checks `information_schema.COLUMNS` on first connect). New columns are always added this way — never in `CREATE TABLE`.
+
+### Channel auto-import
+
+Playlists with a `channel_id` set are synced automatically (twice daily) and manually via the Sync button in the sidebar or `GET /api/sync.php?id={playlist_id}`.
+
+Sync logic (`melody_sync_playlist_channel` in `includes/youtube.php`):
+1. Fetch `https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}` (requires `php-xml`)
+2. Iterate entries; for each, HEAD-request `youtube.com/shorts/{id}` — HTTP 200 = Short (skip), redirect = regular video
+3. Compare video ID against `last_seen_video_id`; if different, insert into `melody_videos` and update `last_seen_video_id`
+4. All errors (network failure, missing extension, invalid channel) are logged via `error_log()` and return `['status' => 'error']` — nothing crashes
+
+Sync status values: `added` | `up_to_date` | `skipped` (no channel_id) | `error`.
 
 ### Player (script.js)
 
@@ -129,6 +156,8 @@ Boot sequence: `boot()` → `initPlaylists()` (API fetch) → `loadStorage()` �
 - Right-click on a track shows a context menu (`#ctx-menu`) with "Play Next" option
 - `playbackMode` (`'audio'` | `'video'`) controls whether the YouTube iframe or the album art container is visible
 - **Electron frameless window**: `bindEvents()` checks `window.electronAPI`; if present it adds `body.electron` class (activates custom title bar CSS) and wires `#win-minimize/maximize/close` buttons via IPC. The `#win-controls` bar spans full width with `-webkit-app-region: drag`; buttons override with `no-drag`. The app grid shifts down 32 px via `body.electron #app { margin-top: 32px }`. In browser/Docker mode the buttons are hidden and `window.electronAPI` is undefined.
+- **Sidebar Sync button** (`#btn-sync-channels`): calls `GET /api/sync.php`, shows toast ("N new videos added" / "Already up to date" / "No channels configured"), then re-runs `initPlaylists()` + `renderPlaylistNav()` + `loadPlaylist()` if any videos were added. Disabled (faded) while in-flight.
+- **Sidebar playlist scroll**: `.playlist-nav` is `display:flex; flex-direction:column; overflow:hidden`. Only the `ul` has `overflow-y:auto` so the "Playlists" nav label stays pinned. `ul` has `padding-right:3px` for scrollbar breathing room.
 
 **localStorage persists**: volume, loop mode, shuffle, autoplay, speed, playback mode, favorites, custom playlists, active playlist index.
 
@@ -168,4 +197,5 @@ Generate a new hash: `php -r "echo password_hash('yourpassword', PASSWORD_BCRYPT
 
 - **No build tooling** — do not introduce bundlers, TypeScript, or npm without discussing first
 - **No framework** — the frontend is intentionally vanilla JS
+- **`php-xml` is required** for channel sync (`simplexml_load_string`); install with `sudo apt-get install php-xml`. Already included in `install.sh` but may be missing on older installs.
 - **`.env.example` contains a real bcrypt hash** — replace it before shipping; it is a leftover placeholder
