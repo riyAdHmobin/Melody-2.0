@@ -83,7 +83,7 @@ sudo tee "$BIN_PATH" > /dev/null <<'EOF'
 # Load NVM if electron is not already on PATH (e.g. desktop launcher, cron)
 if ! command -v electron &>/dev/null; then
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" --no-use
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 fi
 exec electron --no-sandbox /opt/melody/electron/ "$@"
 EOF
