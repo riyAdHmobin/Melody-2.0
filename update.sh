@@ -23,8 +23,9 @@ else
     SRC="$TMP_DIR/melody"
 fi
 
-echo "Ensuring php-xml is installed..."
-sudo apt-get install -y php-xml -qq
+echo "Ensuring dependencies are installed..."
+sudo apt-get install -y php-xml ffmpeg python3 python3-pip -qq
+sudo pip3 install --break-system-packages yt-dlp 2>/dev/null || sudo pip3 install yt-dlp
 
 echo "Syncing files to /opt/melody/..."
 sudo rsync -a --delete \
@@ -32,6 +33,7 @@ sudo rsync -a --delete \
     --exclude='.env' \
     --exclude='.idea' \
     --exclude='node_modules' \
+    --exclude='downloads' \
     "$SRC/" /opt/melody/
 
 echo ""

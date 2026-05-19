@@ -322,6 +322,9 @@
 <!-- ─── Toast ─── -->
 <div id="toast" aria-live="polite"></div>
 
+<!-- ─── Local Audio (for downloaded tracks) ─── -->
+<audio id="local-audio" preload="none"></audio>
+
 <!-- ─── YouTube IFrame API ─── -->
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="assets/js/sources.js"></script>

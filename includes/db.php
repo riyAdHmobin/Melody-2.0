@@ -74,5 +74,16 @@ function melody_db(): PDO {
         $pdo->exec("ALTER TABLE melody_playlists ADD COLUMN last_seen_video_id VARCHAR(100) NULL DEFAULT NULL");
     }
 
+    // Add local_audio_path to melody_videos if not yet present
+    $has_local = $pdo->query("
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = 'melody_videos'
+          AND COLUMN_NAME  = 'local_audio_path'
+    ")->fetchColumn();
+    if (!$has_local) {
+        $pdo->exec("ALTER TABLE melody_videos ADD COLUMN local_audio_path VARCHAR(255) NULL DEFAULT NULL");
+    }
+
     return $pdo;
 }
