@@ -68,6 +68,8 @@
                         </svg>
                         Add Media
                     </button>
+                </div>
+                <div class="mode-toggle sync-btn">
                     <button id="btn-sync-channels" class="mode-btn as-r-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>

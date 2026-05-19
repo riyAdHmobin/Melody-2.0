@@ -306,6 +306,10 @@ body.electron #app {
     color: #000;
 }
 
+.sync-btn {
+    margin-top: 7px;
+}
+
 #btn-sync-channels:hover {
     background: var(--accent);
     color: #000;
