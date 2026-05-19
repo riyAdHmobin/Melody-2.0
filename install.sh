@@ -78,10 +78,14 @@ sudo chmod -R 755 "$INSTALL_DIR"
 
 # ── 5. Launcher script ──────────────────────────────────────────────────────
 step "Creating launcher"
-ELECTRON_BIN=$(command -v electron)
-sudo tee "$BIN_PATH" > /dev/null <<EOF
+sudo tee "$BIN_PATH" > /dev/null <<'EOF'
 #!/usr/bin/env bash
-exec "$ELECTRON_BIN" --no-sandbox /opt/melody/electron/ "\$@"
+# Load NVM if electron is not already on PATH (e.g. desktop launcher, cron)
+if ! command -v electron &>/dev/null; then
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" --no-use
+fi
+exec electron --no-sandbox /opt/melody/electron/ "$@"
 EOF
 sudo chmod +x "$BIN_PATH"
 
