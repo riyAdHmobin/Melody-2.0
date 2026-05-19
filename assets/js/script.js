@@ -17,6 +17,7 @@ const state = {
     speed:            1,
     favorites:        new Set(),
     favoritesActive:  false,
+    allActive:        false,
     searchQuery:      '',
     ytPlayer:         null,
     ytReady:          false,
@@ -441,7 +442,8 @@ async function loadPlaylist(idx) {
     if (!pl) return;
 
     state.favoritesActive = false;
-    state.activePl  = idx;
+    state.allActive  = false;
+    state.activePl   = idx;
     state.currentIdx = -1;
 
     dom.tracklistTitle.textContent = pl.name;
@@ -623,6 +625,17 @@ function truncTitle(s, n = 16) {
 function renderPlaylistNav() {
     dom.playlistList.innerHTML = '';
 
+    // All songs pseudo-playlist
+    const allLi = document.createElement('li');
+    allLi.className = state.allActive ? 'active' : '';
+    allLi.innerHTML = `
+      <button>
+        <span class="pl-dot all-pl-dot"></span>
+        All Songs
+      </button>`;
+    allLi.querySelector('button').addEventListener('click', loadAllView);
+    dom.playlistList.appendChild(allLi);
+
     // Favorites pseudo-playlist
     const favLi = document.createElement('li');
     favLi.className = state.favoritesActive ? 'active' : '';
@@ -637,7 +650,7 @@ function renderPlaylistNav() {
 
     state.playlists.forEach((pl, idx) => {
         const li  = document.createElement('li');
-        li.className = (!state.favoritesActive && idx === state.activePl) ? 'active' : '';
+        li.className = (!state.favoritesActive && !state.allActive && idx === state.activePl) ? 'active' : '';
         li.innerHTML = `
       <button>
         <span class="pl-dot"></span>
@@ -648,6 +661,31 @@ function renderPlaylistNav() {
         });
         dom.playlistList.appendChild(li);
     });
+}
+
+function loadAllView() {
+    state.allActive       = true;
+    state.favoritesActive = false;
+    state.currentIdx      = -1;
+
+    const seen   = new Set();
+    const tracks = [];
+    for (const pl of state.playlists) {
+        const src = pl.tracks?.length ? pl.tracks : (pl.demo || []);
+        for (const t of src) {
+            if (!seen.has(t.id)) {
+                seen.add(t.id);
+                tracks.push(t);
+            }
+        }
+    }
+    state.tracks = tracks;
+
+    dom.tracklistTitle.textContent   = 'All Songs';
+    dom.tracklistLoading.classList.add('hidden');
+    dom.tracklistCount.textContent   = `${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
+    renderTrackList();
+    renderPlaylistNav();
 }
 
 /* ─────────────────────────────────────────────────────
@@ -701,6 +739,7 @@ async function syncFavoriteToDB(id) {
 
 function loadFavoritesView() {
     state.favoritesActive = true;
+    state.allActive  = false;
     state.currentIdx = -1;
 
     const seen = new Set();
