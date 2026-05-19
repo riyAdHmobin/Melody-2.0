@@ -46,6 +46,7 @@ index.php          — Player UI (HTML + inline SVG, loads assets/js/*)
 admin.php          — Password-protected playlist/track CRUD (self-contained PHP + inline CSS)
 config.php         — DB credentials + admin hash (reads env vars, falls back to hardcoded defaults)
 .env               — Local environment overrides (gitignored)
+.htaccess          — Blocks direct HTTP access to config.php; sets DirectoryIndex
 
 includes/
   db.php           — PDO singleton; runs CREATE TABLE IF NOT EXISTS on every first connection
@@ -62,7 +63,7 @@ api/
 assets/
   css/style.css    — Dark glassmorphism theme
   js/sources.js    — getPlaylistSources(): fetches /api/playlists.php, merges with DEFAULT_PLAYLIST_SOURCES
-  js/script.js     — All player logic (~1000 lines)
+  js/script.js     — All player logic (~1150 lines)
   icons/logo.svg   — Inlined in index.php (not loaded as <img>)
 
 electron/
