@@ -396,7 +396,7 @@ function setVolume(v) {
     state.volume = v;
     dom.volumeSlider.value = v;
     if (state.ytReady && state.ytPlayer) state.ytPlayer.setVolume(v);
-    dom.localAudio.volume = v / 100;
+    if (dom.localAudio) dom.localAudio.volume = v / 100;
     updateVolIcon(v);
     saveStorage();
 }
@@ -1046,27 +1046,29 @@ function bindEvents() {
     });
 
     /* Local audio events */
-    dom.localAudio.addEventListener('play', () => {
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        dom.artSpinner.classList.remove('loading');
-        dom.albumArtWrap.classList.add('playing');
-        dom.equalizer.classList.remove('hidden');
-        startProgressTracking();
-    });
-    dom.localAudio.addEventListener('pause', () => {
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        dom.albumArtWrap.classList.remove('playing');
-        dom.equalizer.classList.add('hidden');
-        stopProgressTracking();
-    });
-    dom.localAudio.addEventListener('ended', handleTrackEnd);
-    dom.localAudio.addEventListener('waiting', () => dom.artSpinner.classList.add('loading'));
-    dom.localAudio.addEventListener('canplay', () => dom.artSpinner.classList.remove('loading'));
-    dom.localAudio.addEventListener('loadedmetadata', () => {
-        dom.timeTotal.textContent = formatTime(dom.localAudio.duration);
-    });
+    if (dom.localAudio) {
+        dom.localAudio.addEventListener('play', () => {
+            state.isPlaying = true;
+            updatePlayPauseUI();
+            dom.artSpinner.classList.remove('loading');
+            dom.albumArtWrap.classList.add('playing');
+            dom.equalizer.classList.remove('hidden');
+            startProgressTracking();
+        });
+        dom.localAudio.addEventListener('pause', () => {
+            state.isPlaying = false;
+            updatePlayPauseUI();
+            dom.albumArtWrap.classList.remove('playing');
+            dom.equalizer.classList.add('hidden');
+            stopProgressTracking();
+        });
+        dom.localAudio.addEventListener('ended', handleTrackEnd);
+        dom.localAudio.addEventListener('waiting', () => dom.artSpinner.classList.add('loading'));
+        dom.localAudio.addEventListener('canplay', () => dom.artSpinner.classList.remove('loading'));
+        dom.localAudio.addEventListener('loadedmetadata', () => {
+            dom.timeTotal.textContent = formatTime(dom.localAudio.duration);
+        });
+    }
 
     /* Favorite (main) */
     dom.btnFavorite.addEventListener('click', () => {
