@@ -53,16 +53,27 @@ body {
 #win-controls {
     display: none;
     position: fixed;
-    top: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
+    height: 32px;
     z-index: 9999;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
+    padding: 0 8px;
     gap: 2px;
-    padding: 5px 8px;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag; /* full bar is the drag handle */
+    background: rgba(8,8,14,.60);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,.05);
 }
 body.electron #win-controls { display: flex; }
+
+/* Shift app grid down so it sits below the title bar */
+body.electron #app {
+    margin-top: 32px;
+    height: calc(100vh - 32px);
+}
 
 #win-controls button {
     background: none;
@@ -81,11 +92,6 @@ body.electron #win-controls { display: flex; }
 #win-controls button:hover { background: rgba(255,255,255,.10); color: #fff; }
 #win-close:hover { background: rgba(210,45,45,.80) !important; color: #fff !important; }
 #win-controls button svg { width: 12px; height: 12px; display: block; }
-
-/* Drag regions — areas the user grabs to move the frameless window */
-body.electron .logo { -webkit-app-region: drag; cursor: default; }
-body.electron .tracklist-header { -webkit-app-region: drag; }
-body.electron .tracklist-header * { -webkit-app-region: no-drag; }
 
 /* ── Particles Canvas (background) ── */
 #particles-canvas {
