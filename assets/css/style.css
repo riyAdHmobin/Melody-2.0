@@ -244,14 +244,20 @@ body.electron #app {
 .playlist-nav {
     flex: 1;
     min-height: 60px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 .playlist-nav ul {
+    flex: 1;
+    min-height: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 3px;
 }
 .playlist-nav li {
     border-radius: var(--radius-sm);
